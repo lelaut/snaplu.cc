@@ -1,8 +1,9 @@
 interface SearchbarProps {}
 
+// TODO: implement this
 const Searchbar = ({}: SearchbarProps) => {
   return (
-    <div className="flex w-full transform items-center gap-2 rounded-sm border border-neutral-200 bg-neutral-100 px-2 transition focus-within:border-blue-400 dark:border-neutral-600 dark:bg-neutral-700 focus-within:dark:border-blue-600 md:w-fit md:focus-within:scale-105">
+    <div className="flex w-full transform items-center gap-2 rounded-sm border border-neutral-200 bg-neutral-100 px-2 transition-transform focus-within:border-blue-400 dark:border-neutral-600 dark:bg-neutral-700 focus-within:dark:border-blue-600 md:w-fit md:focus-within:scale-105">
       <input className="w-full bg-transparent md:w-[250px]" type="text" />
       <svg
         className="h-8 w-8 fill-black opacity-50 dark:fill-white md:h-6 md:w-6"

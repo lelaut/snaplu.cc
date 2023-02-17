@@ -5,12 +5,20 @@ import Searchbar from "./Searchbar";
 import ThemeSwitch from "./ThemeSwitch";
 
 interface LayoutProps {
-  children: ReactNode;
+  children: ({
+    navHeight,
+    bannerHeight,
+  }: {
+    navHeight: number;
+    bannerHeight: number;
+  }) => ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
   const navRef = useRef<HTMLDivElement>(null);
-  const { data: session, status } = useSession();
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  const { status } = useSession();
 
   const isAuthenticated = status === "authenticated";
 
@@ -18,7 +26,7 @@ export const Layout = ({ children }: LayoutProps) => {
     <>
       <nav
         ref={navRef}
-        className="fixed flex w-screen items-center gap-4 border-neutral-200 bg-neutral-50 p-2 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 md:border-b md:p-4"
+        className="fixed z-50 flex w-screen items-center gap-4 border-neutral-200 bg-neutral-50 p-2 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 md:border-b md:p-4"
       >
         <div className="flex flex-1 gap-2 md:flex-wrap md:gap-4">
           <Logo />
@@ -34,15 +42,18 @@ export const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
       </nav>
-      <main
-        className="h-screen bg-neutral-50 dark:bg-neutral-800"
-        style={{ paddingTop: navRef.current?.clientHeight }}
-      >
-        {children}
+      <main className="h-screen bg-neutral-50 dark:bg-neutral-800">
+        {children({
+          navHeight: navRef.current?.clientHeight ?? 0,
+          bannerHeight: bannerRef.current?.clientHeight ?? 0,
+        })}
       </main>
 
       {!isAuthenticated && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center justify-around bg-green-400 text-neutral-900 md:hidden ">
+        <div
+          ref={bannerRef}
+          className="fixed inset-x-0 bottom-0 flex items-center justify-around bg-green-400 text-neutral-900 md:hidden "
+        >
           <div className="py-4">
             <h2 className="text-xl font-semibold">Start playing now</h2>
             <p className="hidden text-sm xs:block">

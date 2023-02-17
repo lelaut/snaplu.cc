@@ -1,12 +1,77 @@
 import { type NextPage } from "next";
+import { useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
-import { signIn, signOut, useSession } from "next-auth/react";
+import InfiniteLoader from "react-window-infinite-loader";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { Grid, type GridCellRenderer } from "react-virtualized";
 
 import { api } from "../utils/api";
 import { Layout } from "../components/Layout";
+import { useWindowDimensions } from "../utils/hooks";
+import Card, { CARDS_PER_LINE, CARD_ASPECT } from "../components/Card";
+import { type CardModel } from "../utils/models";
 
 const HomePage: NextPage = () => {
+  const [hash, setHash] = useState<string | undefined>();
+
+  const { width } = useWindowDimensions();
+  const cardWidth = width / CARDS_PER_LINE;
+  const cardHeight = cardWidth * CARD_ASPECT;
+
+  // TODO: deal with error responses, maybe send user to another page?
+  const explore = api.explore.cards.useInfiniteQuery(
+    {
+      hash,
+      cardsPerLine: CARDS_PER_LINE,
+    },
+    {
+      getNextPageParam: (it) => it.nextCursor,
+    }
+  );
+
+  const cards = explore.data?.pages.flatMap((it) => it.cards) ?? [];
+
+  // TODO: change URL to use the hash
+  const handleCardClick = ({ hash }: CardModel) => {
+    setHash(hash);
+  };
+
+  async function loadMoreItems(
+    startIndex: number,
+    stopIndex: number
+  ): Promise<void> {
+    if (explore.isFetchingNextPage) {
+      return;
+    }
+    if (stopIndex < cards.length) {
+      return;
+    }
+
+    if (stopIndex < 200) {
+      return explore.fetchNextPage() as unknown as Promise<void>;
+    }
+  }
+
+  const rowRender: GridCellRenderer = ({
+    key,
+    rowIndex,
+    columnIndex,
+    style,
+  }) => {
+    const idx = columnIndex + CARDS_PER_LINE * rowIndex;
+    const card = cards[idx];
+
+    return (
+      <Card
+        key={key}
+        style={style}
+        card={card}
+        isCurrentReference={card?.hash === hash}
+        onClick={handleCardClick}
+      />
+    );
+  };
+
   return (
     <>
       <Head>
@@ -14,82 +79,76 @@ const HomePage: NextPage = () => {
         <meta name="description" content="Exploring photos in our database" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Layout></Layout>
+      <Layout>
+        {({ navHeight, bannerHeight }) => (
+          <InfiniteLoader
+            isItemLoaded={(i) =>
+              explore.data
+                ? i > cards.length
+                  ? explore.isFetchingNextPage
+                  : false
+                : true
+            }
+            itemCount={cards.length + 1}
+            loadMoreItems={loadMoreItems}
+          >
+            {({ onItemsRendered, ref }) => (
+              <AutoSizer
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                ref={ref}
+                disableHeight
+              >
+                {({ width }) => (
+                  <Grid
+                    cellRenderer={rowRender}
+                    columnWidth={cardWidth}
+                    columnCount={CARDS_PER_LINE}
+                    style={{ top: navHeight }}
+                    height={window.innerHeight - navHeight - 1 - bannerHeight}
+                    onSectionRendered={({
+                      columnStartIndex,
+                      columnStopIndex,
+                      columnOverscanStartIndex,
+                      columnOverscanStopIndex,
+                      rowStartIndex,
+                      rowStopIndex,
+                      rowOverscanStartIndex,
+                      rowOverscanStopIndex,
+                    }) => {
+                      const visibleStartIndex =
+                        rowStartIndex * CARDS_PER_LINE + columnStartIndex;
+                      const visibleStopIndex =
+                        rowStopIndex * CARDS_PER_LINE + columnStopIndex;
+                      const overscanStartIndex =
+                        rowOverscanStartIndex * CARDS_PER_LINE +
+                        columnOverscanStartIndex;
+                      const overscanStopIndex =
+                        rowOverscanStopIndex * CARDS_PER_LINE +
+                        columnOverscanStopIndex;
+
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                      onItemsRendered({
+                        visibleStartIndex,
+                        visibleStopIndex,
+                        overscanStartIndex,
+                        overscanStopIndex,
+                      });
+                    }}
+                    // TODO: add this
+                    // noContentRenderer={this._noContentRenderer}
+                    overscanRowCount={4}
+                    rowHeight={cardHeight}
+                    rowCount={Math.floor(cards.length / CARDS_PER_LINE)}
+                    width={width}
+                  />
+                )}
+              </AutoSizer>
+            )}
+          </InfiniteLoader>
+        )}
+      </Layout>
     </>
   );
-
-  // const hello = api.example.hello.useQuery({ text: "from tRPC" });
-
-  // return (
-  //   <>
-  //     <Head>
-  //       <title>Create T3 App</title>
-  //       <meta name="description" content="Generated by create-t3-app" />
-  //       <link rel="icon" href="/favicon.ico" />
-  //     </Head>
-  //     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
-  //       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-  //         <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-  //           Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-  //         </h1>
-  //         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-  //           <Link
-  //             className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-  //             href="https://create.t3.gg/en/usage/first-steps"
-  //             target="_blank"
-  //           >
-  //             <h3 className="text-2xl font-bold">First Steps →</h3>
-  //             <div className="text-lg">
-  //               Just the basics - Everything you need to know to set up your
-  //               database and authentication.
-  //             </div>
-  //           </Link>
-  //           <Link
-  //             className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-  //             href="https://create.t3.gg/en/introduction"
-  //             target="_blank"
-  //           >
-  //             <h3 className="text-2xl font-bold">Documentation →</h3>
-  //             <div className="text-lg">
-  //               Learn more about Create T3 App, the libraries it uses, and how
-  //               to deploy it.
-  //             </div>
-  //           </Link>
-  //         </div>
-  //         <div className="flex flex-col items-center gap-2">
-  //           <p className="text-2xl text-white">
-  //             {hello.data ? hello.data.greeting : "Loading tRPC query..."}
-  //           </p>
-  //           <AuthShowcase />
-  //         </div>
-  //       </div>
-  //     </main>
-  //   </>
-  // );
 };
 
 export default HomePage;
-
-const AuthShowcase: React.FC = () => {
-  const { data: sessionData } = useSession();
-
-  const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: sessionData?.user !== undefined }
-  );
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
-        {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-        {secretMessage && <span> - {secretMessage}</span>}
-      </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => void signOut() : () => void signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
-    </div>
-  );
-};
