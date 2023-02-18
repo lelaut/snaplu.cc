@@ -149,7 +149,7 @@ const HomePage: NextPage = () => {
 
             <div
               className={
-                "pointer-events-none fixed right-10 bottom-10 rounded-full bg-neutral-50 p-4 shadow-xl transition-opacity duration-500 dark:bg-neutral-800 " +
+                "pointer-events-none fixed right-4 rounded-full bg-neutral-50 p-4 pb-10 shadow-xl transition-opacity duration-500 dark:bg-neutral-800 md:right-10 md:bottom-10 md:pb-4 " +
                 (explore.isFetching ? "opacity-100" : "opacity-0")
               }
             >
