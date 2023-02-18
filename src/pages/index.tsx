@@ -12,7 +12,7 @@ import Card, { CARDS_PER_LINE, CARD_ASPECT } from "../components/Card";
 import { type CardModel } from "../utils/models";
 
 const HomePage: NextPage = () => {
-  const [hash, setHash] = useState<string | undefined>();
+  const [reference, setReference] = useState<string | undefined>();
 
   const { width } = useWindowDimensions();
   const cardWidth = width / CARDS_PER_LINE;
@@ -21,7 +21,7 @@ const HomePage: NextPage = () => {
   // TODO: deal with error responses, maybe send user to another page?
   const explore = api.explore.cards.useInfiniteQuery(
     {
-      hash,
+      reference,
       cardsPerLine: CARDS_PER_LINE,
     },
     {
@@ -29,11 +29,14 @@ const HomePage: NextPage = () => {
     }
   );
 
-  const cards = explore.data?.pages.flatMap((it) => it.cards) ?? [];
+  const cards =
+    explore.data?.pages.flatMap((it) => {
+      return it.cards;
+    }) ?? [];
 
   // TODO: change URL to use the hash
-  const handleCardClick = ({ hash }: CardModel) => {
-    setHash(hash);
+  const handleCardClick = ({ id }: CardModel) => {
+    setReference(id);
   };
 
   async function loadMoreItems(
@@ -66,7 +69,7 @@ const HomePage: NextPage = () => {
         key={key}
         style={style}
         card={card}
-        isCurrentReference={card?.hash === hash}
+        isCurrentReference={card?.id === reference}
         onClick={handleCardClick}
       />
     );
@@ -104,8 +107,8 @@ const HomePage: NextPage = () => {
                       cellRenderer={rowRender}
                       columnWidth={cardWidth}
                       columnCount={CARDS_PER_LINE}
-                      style={{ top: navHeight }}
-                      height={window.innerHeight - navHeight - bannerHeight}
+                      style={{ top: navHeight + 1 }}
+                      height={window.innerHeight - navHeight - 1 - bannerHeight}
                       onSectionRendered={({
                         columnStartIndex,
                         columnStopIndex,

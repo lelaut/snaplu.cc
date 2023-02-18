@@ -37,9 +37,7 @@ const Card = ({ card, style, isCurrentReference, onClick }: CardProps) => {
       onClick={() => !isCurrentReference && onClick && onClick(card)}
     >
       {Object.keys(card).map((key) => (
-        <p key={key}>
-          {key}: {card[key]}
-        </p>
+        <p key={key}>{key}</p>
       ))}
     </div>
   );
