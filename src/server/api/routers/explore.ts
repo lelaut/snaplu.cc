@@ -31,13 +31,13 @@ export const exploreRouter = createTRPCRouter({
                   : (uuidv4() as string);
               const creator = {
                 username: `creator_${generation}`,
-                link: "",
+                link: `/${`creator_${generation}`}`,
               };
               const collection = {
                 slug: `collection_${generation}`,
                 size: Math.floor(Math.random() * 10 + 10),
-                playcost: +Math.random().toFixed(2),
-                link: "",
+                playcost: +(Math.random() * 0.9 + 0.1).toFixed(2),
+                link: `/${creator.username}/${`collection_${generation}`}`,
                 creator,
               };
 
