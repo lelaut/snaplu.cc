@@ -26,6 +26,7 @@ const HomePage: NextPage = () => {
     },
     {
       getNextPageParam: (it) => it.nextCursor,
+      refetchOnWindowFocus: false,
     }
   );
 
