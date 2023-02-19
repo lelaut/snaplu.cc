@@ -10,7 +10,7 @@ import {
   CollectionBlockedCard,
   CollectionUnblockedCard,
 } from "../../components/Card";
-import { Layout, LayoutWithFixedContext } from "../../components/Layout";
+import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
 import { PlayLink } from "../../components/Link";
 import { fakeCollections } from "../../utils/fake";
 
@@ -18,7 +18,7 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   user,
 }) => {
   return (
-    <Layout>
+    <LayoutWithNav>
       <LayoutWithFixedContext
         contextTitle={user.name}
         contextAction={<button>Follow</button>}
@@ -53,7 +53,7 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
           ))}
         </div>
       </LayoutWithFixedContext>
-    </Layout>
+    </LayoutWithNav>
   );
 };
 

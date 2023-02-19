@@ -1,14 +1,33 @@
 import { useSession } from "next-auth/react";
-import { useRef, type ReactNode, type ReactElement, useState } from "react";
+import {
+  useRef,
+  type ReactNode,
+  type ReactElement,
+  useState,
+  type CSSProperties,
+} from "react";
 import Logo from "./Logo";
 import Searchbar from "./Searchbar";
 import ThemeSwitch from "./ThemeSwitch";
 
-interface LayoutProps {
+export const BaseLayout = ({
+  children,
+  style,
+}: {
   children: ReactNode;
-}
+  style?: CSSProperties;
+}) => {
+  return (
+    <main
+      className="h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
+      style={style}
+    >
+      {children}
+    </main>
+  );
+};
 
-export const Layout = ({ children }: LayoutProps) => {
+export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
   const navRef = useRef<HTMLDivElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -36,15 +55,14 @@ export const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
       </nav>
-      <main
-        className="h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
+      <BaseLayout
         style={{
           paddingTop: navRef.current?.clientHeight ?? 0,
           paddingBottom: bannerRef.current?.clientHeight ?? 0,
         }}
       >
         {children}
-      </main>
+      </BaseLayout>
 
       {!isAuthenticated && (
         <div

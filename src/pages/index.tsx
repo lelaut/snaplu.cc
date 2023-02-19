@@ -6,7 +6,7 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { Grid, type GridCellRenderer } from "react-virtualized";
 
 import { api } from "../utils/api";
-import { Layout } from "../components/Layout";
+import { LayoutWithNav } from "../components/Layout";
 import { useWindowDimensions } from "../utils/hooks";
 import {
   CARDS_PER_LINE,
@@ -88,7 +88,7 @@ const HomePage: NextPage = () => {
         <meta name="description" content="Exploring photos in our database" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Layout>
+      <LayoutWithNav>
         <div className="h-full w-full">
           <InfiniteLoader
             isItemLoaded={(i) =>
@@ -178,7 +178,7 @@ const HomePage: NextPage = () => {
             </svg>
           </div>
         </div>
-      </Layout>
+      </LayoutWithNav>
     </>
   );
 };

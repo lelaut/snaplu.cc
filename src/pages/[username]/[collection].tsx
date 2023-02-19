@@ -10,7 +10,7 @@ import {
   CollectionUnblockedCard,
 } from "../../components/Card";
 
-import { Layout, LayoutWithFixedContext } from "../../components/Layout";
+import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
 import { ArtistLink, PlayLink } from "../../components/Link";
 import { fakeCollectionCards, fakeCollections } from "../../utils/fake";
 
@@ -18,7 +18,7 @@ const CollectionPage: NextPage<
   InferGetStaticPropsType<typeof getStaticProps>
 > = ({ collection }) => {
   return (
-    <Layout>
+    <LayoutWithNav>
       <LayoutWithFixedContext
         contextContent={<p className="text-sm">{collection.description}</p>}
         contextTitle={collection.name}
@@ -41,7 +41,7 @@ const CollectionPage: NextPage<
           <CollectionBlockedCard amount={collection.cardsBlocked} />
         </div>
       </LayoutWithFixedContext>
-    </Layout>
+    </LayoutWithNav>
   );
 };
 
