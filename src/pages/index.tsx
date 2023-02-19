@@ -3,12 +3,16 @@ import { useState } from "react";
 import Head from "next/head";
 import InfiniteLoader from "react-window-infinite-loader";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { Grid, WindowScroller, type GridCellRenderer } from "react-virtualized";
+import { Grid, type GridCellRenderer } from "react-virtualized";
 
 import { api } from "../utils/api";
 import { Layout } from "../components/Layout";
 import { useWindowDimensions } from "../utils/hooks";
-import Card, { CARDS_PER_LINE, CARD_ASPECT } from "../components/Card";
+import {
+  CARDS_PER_LINE,
+  CARD_ASPECT,
+  CollectionCard,
+} from "../components/Card";
 import { type CardModel } from "../utils/models";
 
 const HomePage: NextPage = () => {
@@ -67,7 +71,7 @@ const HomePage: NextPage = () => {
     const card = cards[idx];
 
     return (
-      <Card
+      <CollectionCard
         key={key}
         style={style}
         card={card}

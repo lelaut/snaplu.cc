@@ -19,7 +19,12 @@ interface CardProps {
   onClick: (card: CardModel) => Promise<void> | void;
 }
 
-const Card = ({ card, style, isCurrentReference, onClick }: CardProps) => {
+export const CollectionCard = ({
+  card,
+  style,
+  isCurrentReference,
+  onClick,
+}: CardProps) => {
   // TODO: implement this
   if (!card) {
     return (
@@ -85,4 +90,24 @@ const Card = ({ card, style, isCurrentReference, onClick }: CardProps) => {
   );
 };
 
-export default Card;
+export const CollectionUnblockedCard = ({ color }: { color: string }) => (
+  <div
+    className="h-[300px] min-w-[200px] rounded shadow"
+    style={{ backgroundColor: color }}
+  />
+);
+
+export const CollectionBlockedCard = ({ amount }: { amount: number }) =>
+  amount > 0 ? (
+    <div className="flex h-[300px] min-w-[200px] flex-col items-center justify-center gap-1 rounded bg-neutral-100 shadow ring-2 dark:bg-neutral-700">
+      <p className="text-2xl font-bold">+{amount}</p>
+      <p className="text-xs">
+        <span className="rounded-full bg-green-400 px-2 py-px font-bold text-green-600">
+          Play
+        </span>{" "}
+        <span className="opacity-50">to unlock more cards</span>
+      </p>
+    </div>
+  ) : (
+    <></>
+  );

@@ -129,7 +129,7 @@ export const LayoutWithFixedContext = ({
         <div className="sticky top-0 sm:hidden">
           {renderContextHeader()}
           {headerOpened && (
-            <div className="max-h-[300px] overflow-y-auto border-b border-neutral-200 bg-neutral-50/80 p-4 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80">
+            <div className="max-h-[300px] overflow-y-auto border-b border-neutral-200 bg-neutral-50/80 p-4 text-sm backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80">
               {contextContent}
             </div>
           )}
@@ -139,7 +139,7 @@ export const LayoutWithFixedContext = ({
       <div className="hidden max-h-fit w-[400px] border-l border-neutral-200 dark:border-neutral-700 sm:block">
         <div className="h-full overflow-y-auto">
           {renderContextHeader()}
-          <div className="p-4">{contextContent}</div>
+          <div className="p-4 text-sm">{contextContent}</div>
         </div>
       </div>
     </div>
