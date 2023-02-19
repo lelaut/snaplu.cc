@@ -3,7 +3,7 @@ import { useState } from "react";
 import Head from "next/head";
 import InfiniteLoader from "react-window-infinite-loader";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { Grid, type GridCellRenderer } from "react-virtualized";
+import { Grid, WindowScroller, type GridCellRenderer } from "react-virtualized";
 
 import { api } from "../utils/api";
 import { Layout } from "../components/Layout";
@@ -36,8 +36,9 @@ const HomePage: NextPage = () => {
     }) ?? [];
 
   // TODO: change URL to use the hash
-  const handleCardClick = ({ id }: CardModel) => {
-    setReference(id);
+  const handleCardClick = async ({ id }: CardModel) => {
+    await explore.refetch();
+    setReference(id === reference ? undefined : id);
   };
 
   async function loadMoreItems(
@@ -84,101 +85,95 @@ const HomePage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Layout>
-        {({ navHeight, bannerHeight }) => (
-          <>
-            <InfiniteLoader
-              isItemLoaded={(i) =>
-                explore.data
-                  ? i > cards.length
-                    ? explore.isFetchingNextPage
-                    : false
-                  : true
-              }
-              itemCount={cards.length + 1}
-              loadMoreItems={loadMoreItems}
-            >
-              {({ onItemsRendered, ref }) => (
-                <AutoSizer
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                  ref={ref}
-                  disableHeight
-                >
-                  {({ width }) => (
-                    <Grid
-                      cellRenderer={rowRender}
-                      columnWidth={cardWidth}
-                      columnCount={CARDS_PER_LINE}
-                      style={{ top: navHeight + 1 }}
-                      height={window.innerHeight - navHeight - 1 - bannerHeight}
-                      onSectionRendered={({
-                        columnStartIndex,
-                        columnStopIndex,
-                        columnOverscanStartIndex,
-                        columnOverscanStopIndex,
-                        rowStartIndex,
-                        rowStopIndex,
-                        rowOverscanStartIndex,
-                        rowOverscanStopIndex,
-                      }) => {
-                        const visibleStartIndex =
-                          rowStartIndex * CARDS_PER_LINE + columnStartIndex;
-                        const visibleStopIndex =
-                          rowStopIndex * CARDS_PER_LINE + columnStopIndex;
-                        const overscanStartIndex =
-                          rowOverscanStartIndex * CARDS_PER_LINE +
-                          columnOverscanStartIndex;
-                        const overscanStopIndex =
-                          rowOverscanStopIndex * CARDS_PER_LINE +
-                          columnOverscanStopIndex;
+        <div className="h-full w-full">
+          <InfiniteLoader
+            isItemLoaded={(i) =>
+              explore.data
+                ? i > cards.length
+                  ? explore.isFetchingNextPage
+                  : false
+                : true
+            }
+            itemCount={cards.length + 1}
+            loadMoreItems={loadMoreItems}
+          >
+            {({ onItemsRendered, ref }) => (
+              <AutoSizer ref={ref}>
+                {({ width, height }) => (
+                  <Grid
+                    cellRenderer={rowRender}
+                    columnWidth={cardWidth}
+                    columnCount={CARDS_PER_LINE}
+                    // style={{ top: navHeight + 1 }}
+                    height={height}
+                    onSectionRendered={({
+                      columnStartIndex,
+                      columnStopIndex,
+                      columnOverscanStartIndex,
+                      columnOverscanStopIndex,
+                      rowStartIndex,
+                      rowStopIndex,
+                      rowOverscanStartIndex,
+                      rowOverscanStopIndex,
+                    }) => {
+                      const visibleStartIndex =
+                        rowStartIndex * CARDS_PER_LINE + columnStartIndex;
+                      const visibleStopIndex =
+                        rowStopIndex * CARDS_PER_LINE + columnStopIndex;
+                      const overscanStartIndex =
+                        rowOverscanStartIndex * CARDS_PER_LINE +
+                        columnOverscanStartIndex;
+                      const overscanStopIndex =
+                        rowOverscanStopIndex * CARDS_PER_LINE +
+                        columnOverscanStopIndex;
 
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                        onItemsRendered({
-                          visibleStartIndex,
-                          visibleStopIndex,
-                          overscanStartIndex,
-                          overscanStopIndex,
-                        });
-                      }}
-                      // TODO: add this
-                      // noContentRenderer={this._noContentRenderer}
-                      overscanRowCount={4}
-                      rowHeight={cardHeight}
-                      rowCount={Math.floor(cards.length / CARDS_PER_LINE)}
-                      width={width}
-                    />
-                  )}
-                </AutoSizer>
-              )}
-            </InfiniteLoader>
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                      onItemsRendered({
+                        visibleStartIndex,
+                        visibleStopIndex,
+                        overscanStartIndex,
+                        overscanStopIndex,
+                      });
+                    }}
+                    // TODO: add this
+                    // noContentRenderer={this._noContentRenderer}
+                    overscanRowCount={4}
+                    rowHeight={cardHeight}
+                    rowCount={Math.floor(cards.length / CARDS_PER_LINE)}
+                    width={width}
+                  />
+                )}
+              </AutoSizer>
+            )}
+          </InfiniteLoader>
 
-            <div
-              className={
-                "pointer-events-none fixed right-4 rounded-full bg-neutral-50 p-4 pb-10 shadow-xl transition-opacity duration-500 dark:bg-neutral-800 md:right-10 md:bottom-10 md:pb-4 " +
-                (explore.isFetching ? "opacity-100" : "opacity-0")
-              }
+          <div
+            className={
+              "pointer-events-none fixed right-4 bottom-20 rounded-full bg-neutral-50 p-4 shadow-xl transition-opacity duration-500 dark:bg-neutral-800 xs:bottom-24 md:right-10 md:bottom-10 md:pb-4 " +
+              (explore.isFetching ? "opacity-100" : "opacity-0")
+            }
+          >
+            <svg
+              className="h-5 w-5 animate-spin text-neutral-800 dark:text-neutral-50"
+              fill="none"
+              viewBox="0 0 24 24"
             >
-              <svg
-                className="h-5 w-5 animate-spin text-neutral-800 dark:text-neutral-50"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            </div>
-          </>
-        )}
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </div>
+        </div>
       </Layout>
     </>
   );

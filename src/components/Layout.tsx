@@ -1,17 +1,11 @@
 import { useSession } from "next-auth/react";
-import { useRef, type ReactNode } from "react";
+import { useRef, type ReactNode, type ReactElement, useState } from "react";
 import Logo from "./Logo";
 import Searchbar from "./Searchbar";
 import ThemeSwitch from "./ThemeSwitch";
 
 interface LayoutProps {
-  children: ({
-    navHeight,
-    bannerHeight,
-  }: {
-    navHeight: number;
-    bannerHeight: number;
-  }) => ReactNode;
+  children: ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
@@ -26,7 +20,7 @@ export const Layout = ({ children }: LayoutProps) => {
     <>
       <nav
         ref={navRef}
-        className="fixed z-50 flex w-screen items-center gap-4 border-neutral-200 bg-neutral-50 p-2 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 md:border-b md:p-4"
+        className="fixed z-50 flex w-screen items-center gap-4 border-neutral-200 bg-neutral-50/80 p-2 text-neutral-900 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-50 md:border-b md:p-4"
       >
         <div className="flex flex-1 gap-2 md:flex-wrap md:gap-4">
           <Logo />
@@ -42,11 +36,14 @@ export const Layout = ({ children }: LayoutProps) => {
           )}
         </div>
       </nav>
-      <main className="h-screen bg-neutral-50 dark:bg-neutral-800">
-        {children({
-          navHeight: navRef.current?.clientHeight ?? 0,
-          bannerHeight: bannerRef.current?.clientHeight ?? 0,
-        })}
+      <main
+        className="h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
+        style={{
+          paddingTop: navRef.current?.clientHeight ?? 0,
+          paddingBottom: bannerRef.current?.clientHeight ?? 0,
+        }}
+      >
+        {children}
       </main>
 
       {!isAuthenticated && (
@@ -77,3 +74,74 @@ const SignInUp = () => (
     </button>
   </>
 );
+
+interface LayoutWithFixedContextProps {
+  children: ReactNode;
+  contextTitle: string;
+  contextSubtitle?: ReactElement;
+  contextAction?: ReactElement;
+  contextContent: ReactElement;
+}
+
+export const LayoutWithFixedContext = ({
+  children,
+  contextAction,
+  contextTitle,
+  contextSubtitle,
+  contextContent,
+}: LayoutWithFixedContextProps) => {
+  const [headerOpened, setHeaderOpened] = useState(false);
+
+  const renderContextHeader = () => (
+    <div className="sticky top-0 flex w-full items-center justify-between border-b border-neutral-200 bg-neutral-50/80 p-4 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80">
+      <div
+        className="max-w-screen flex items-center gap-2"
+        onClick={() => setHeaderOpened(!headerOpened)}
+      >
+        <svg
+          width="16px"
+          height="16px"
+          viewBox="0 0 24 24"
+          fill="none"
+          className={`${
+            headerOpened ? "-rotate-180" : "rotate-0"
+          } stroke-neutral-900 transition duration-500 dark:stroke-neutral-50 sm:hidden`}
+        >
+          <path
+            d="M7 10L12 15L17 10"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <div className="max-w-full">
+          <h2 className="max-w-full break-all text-xl">{contextTitle}</h2>
+          {contextSubtitle}
+        </div>
+      </div>
+      {contextAction}
+    </div>
+  );
+
+  return (
+    <div className="flex h-full w-full">
+      <div className="flex-1 overflow-y-auto">
+        <div className="sticky top-0 sm:hidden">
+          {renderContextHeader()}
+          {headerOpened && (
+            <div className="max-h-[300px] overflow-y-auto border-b border-neutral-200 bg-neutral-50/80 p-4 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80">
+              {contextContent}
+            </div>
+          )}
+        </div>
+        {children}
+      </div>
+      <div className="hidden max-h-fit w-[400px] border-l border-neutral-200 dark:border-neutral-700 sm:block">
+        <div className="h-full overflow-y-auto">
+          {renderContextHeader()}
+          <div className="p-4">{contextContent}</div>
+        </div>
+      </div>
+    </div>
+  );
+};

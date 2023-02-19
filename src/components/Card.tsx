@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { type CardModel } from "../utils/models";
 import { currency } from "../utils/format";
+import { ArtistLink } from "./Link";
 
 export const MIN_CARD_WIDTH = 250;
 export const CARD_ASPECT = 1.5;
@@ -14,8 +15,8 @@ export const CARDS_PER_LINE =
 interface CardProps {
   card?: CardModel;
   style: CSSProperties;
-  isCurrentReference: boolean;
-  onClick: (card: CardModel) => void;
+  isCurrentReference?: boolean;
+  onClick: (card: CardModel) => Promise<void> | void;
 }
 
 const Card = ({ card, style, isCurrentReference, onClick }: CardProps) => {
@@ -32,13 +33,14 @@ const Card = ({ card, style, isCurrentReference, onClick }: CardProps) => {
   // TODO: finish this
   return (
     <div
-      className={`flex flex-col justify-between bg-indigo-500 p-4 hover:opacity-100 ${
-        isCurrentReference
-          ? "border border-yellow-500"
-          : "cursor-pointer opacity-90"
+      className={`flex cursor-pointer flex-col justify-between bg-indigo-500 p-4 hover:opacity-100 ${
+        isCurrentReference ? "border border-yellow-500" : "opacity-90"
       }`}
       style={style}
-      onClick={() => !isCurrentReference && onClick && onClick(card)}
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      onClick={async () => {
+        await Promise.resolve(onClick(card));
+      }}
     >
       <div className="flex items-center justify-between text-xs">
         {[
@@ -73,12 +75,10 @@ const Card = ({ card, style, isCurrentReference, onClick }: CardProps) => {
         </Link>
         <p className="text-xs">
           <span className="opacity-60">Collection by </span>
-          <Link
-            className="font-bold text-pink-400 hover:opacity-60"
-            href={card.collection.creator.link}
-          >
-            {card.collection.creator.username}
-          </Link>
+          <ArtistLink
+            name={card.collection.creator.username}
+            link={card.collection.creator.link}
+          />
         </p>
       </div>
     </div>

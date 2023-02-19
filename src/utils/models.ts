@@ -25,6 +25,7 @@ export interface CollectionModel {
   size: number;
   playcost: number;
   link: string;
+  playLink: string;
   creator: {
     username: string;
     link: string;
