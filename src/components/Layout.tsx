@@ -1,4 +1,4 @@
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import {
   useRef,
   type ReactNode,
@@ -47,7 +47,7 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
         </div>
         <div className="flex gap-4">
           <div className="hidden gap-2 md:flex">
-            <SignInUp />
+            <AuthView />
           </div>
           <ThemeSwitch />
           {isAuthenticated && (
@@ -76,7 +76,7 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
             </p>
           </div>
           <div className="flex gap-2">
-            <SignInUp />
+            <AuthView />
           </div>
         </div>
       )}
@@ -84,13 +84,17 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const SignInUp = () => (
-  <>
-    <button className="transition hover:opacity-80">Sign in</button>
-    <button className="rounded border border-current px-2 py-1 transition hover:opacity-80">
-      Sign up
-    </button>
-  </>
+const AuthView = () => (
+  <button
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    onClick={async () => {
+      // TODO: add actual auth handling, e.g. https://refine.dev/blog/nextauth-google-github-authentication-nextjs/
+      await signIn("google");
+    }}
+    className="rounded bg-neutral-800 px-4 py-1 text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900"
+  >
+    Enter
+  </button>
 );
 
 interface LayoutWithFixedContextProps {
