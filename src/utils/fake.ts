@@ -20,7 +20,7 @@ export function fakeCollections(creatorUsername: string) {
       description: `Collection ${id} description...`,
       link: `${creatorUsername}/${name}`,
       playcost: Math.random() * 0.9 + 0.1,
-      playLink: `/play/${id}`,
+      playLink: `/card/${id}`,
       creatorUsername,
       creatorLink: `/${creatorUsername}`,
 
