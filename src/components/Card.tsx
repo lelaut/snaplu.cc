@@ -1,9 +1,13 @@
 import { type CSSProperties } from "react";
 import Link from "next/link";
+import InfiniteLoader from "react-window-infinite-loader";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { Grid, type GridCellRenderer } from "react-virtualized";
 
 import { type CardModel } from "../utils/models";
 import { currency } from "../utils/format";
 import { ArtistLink } from "./Link";
+import { Spin } from "./Spin";
 
 export const MIN_CARD_WIDTH = 250;
 export const CARD_ASPECT = 1.5;
@@ -111,3 +115,131 @@ export const CollectionBlockedCard = ({ amount }: { amount: number }) =>
   ) : (
     <></>
   );
+
+interface CardsGridProps {
+  cards: CardModel[];
+
+  width: number;
+  onClick: (props: CardModel) => Promise<void> | void;
+
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => Promise<void>;
+
+  reference?: string;
+}
+
+export const CardsGrid = ({
+  cards,
+  width,
+  onClick,
+  isFetchingNextPage,
+  fetchNextPage,
+  reference,
+}: CardsGridProps) => {
+  const cardWidth = width / CARDS_PER_LINE;
+  const cardHeight = cardWidth * CARD_ASPECT;
+
+  async function loadMoreItems(
+    startIndex: number,
+    stopIndex: number
+  ): Promise<void> {
+    if (isFetchingNextPage) {
+      return;
+    }
+    if (stopIndex < cards.length) {
+      return;
+    }
+
+    if (stopIndex < 200) {
+      return fetchNextPage();
+    }
+  }
+
+  const rowRender: GridCellRenderer = ({
+    key,
+    rowIndex,
+    columnIndex,
+    style,
+  }) => {
+    const idx = columnIndex + CARDS_PER_LINE * rowIndex;
+    const card = cards[idx];
+
+    return (
+      <CollectionCard
+        key={key}
+        style={style}
+        card={card}
+        isCurrentReference={card?.id === reference}
+        onClick={onClick}
+      />
+    );
+  };
+
+  return (
+    <div className="h-full w-full">
+      <InfiniteLoader
+        isItemLoaded={(i) => (i > cards.length ? isFetchingNextPage : false)}
+        itemCount={cards.length + 1}
+        loadMoreItems={loadMoreItems}
+      >
+        {({ onItemsRendered, ref }) => (
+          <AutoSizer ref={ref}>
+            {({ width, height }) => (
+              <Grid
+                cellRenderer={rowRender}
+                columnWidth={cardWidth}
+                columnCount={CARDS_PER_LINE}
+                // style={{ top: navHeight + 1 }}
+                height={height}
+                onSectionRendered={({
+                  columnStartIndex,
+                  columnStopIndex,
+                  columnOverscanStartIndex,
+                  columnOverscanStopIndex,
+                  rowStartIndex,
+                  rowStopIndex,
+                  rowOverscanStartIndex,
+                  rowOverscanStopIndex,
+                }) => {
+                  const visibleStartIndex =
+                    rowStartIndex * CARDS_PER_LINE + columnStartIndex;
+                  const visibleStopIndex =
+                    rowStopIndex * CARDS_PER_LINE + columnStopIndex;
+                  const overscanStartIndex =
+                    rowOverscanStartIndex * CARDS_PER_LINE +
+                    columnOverscanStartIndex;
+                  const overscanStopIndex =
+                    rowOverscanStopIndex * CARDS_PER_LINE +
+                    columnOverscanStopIndex;
+
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                  onItemsRendered({
+                    visibleStartIndex,
+                    visibleStopIndex,
+                    overscanStartIndex,
+                    overscanStopIndex,
+                  });
+                }}
+                // TODO: add this
+                // noContentRenderer={this._noContentRenderer}
+                overscanRowCount={4}
+                rowHeight={cardHeight}
+                rowCount={Math.floor(cards.length / CARDS_PER_LINE)}
+                width={width}
+              />
+            )}
+          </AutoSizer>
+        )}
+      </InfiniteLoader>
+
+      <div
+        className={
+          "pointer-events-none fixed right-4 bottom-20 rounded-full bg-neutral-50 p-4 shadow-xl transition-opacity duration-500 dark:bg-neutral-800 xs:bottom-24 md:right-10 md:bottom-10 md:pb-4 " +
+          (isFetchingNextPage ? "opacity-100" : "opacity-0")
+        }
+      >
+        <Spin size={20} />
+      </div>
+    </div>
+  );
+};
