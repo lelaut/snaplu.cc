@@ -9,7 +9,7 @@ import {
   CreatorCollectionList,
 } from "../components/Collection";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
-import { Spin } from "../components/Spin";
+import { Spin } from "../components/Icons";
 import { currency, dayjs } from "../utils/format";
 import { type MonthlyProfit, type CardModel } from "../utils/models";
 import { MonthlyProfitChart } from "../components/Chart";

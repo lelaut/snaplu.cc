@@ -13,7 +13,7 @@ import {
 import { type MonthlyProfit, type CardModel } from "../utils/models";
 import { currency } from "../utils/format";
 import { ArtistLink } from "./Link";
-import { Spin } from "./Spin";
+import { Spin } from "./Icons";
 import { MonthlyProfitChart } from "./Chart";
 
 export const MIN_CARD_WIDTH = 250;
