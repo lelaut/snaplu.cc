@@ -8,7 +8,7 @@ import {
   cardsPerLine,
   CreatorCollectionList,
 } from "../components/Collection";
-import { LayoutWithNav } from "../components/Layout";
+import { LayoutCentered, LayoutWithNav } from "../components/Layout";
 import { Spin } from "../components/Spin";
 import { currency, dayjs } from "../utils/format";
 import { type MonthlyProfit, type CardModel } from "../utils/models";
@@ -59,7 +59,7 @@ const MePage: NextPage = () => {
 
   return (
     <LayoutWithNav>
-      <div className="mx-auto flex h-full w-full flex-col border-neutral-200 dark:border-neutral-700 md:max-w-screen-md md:border-x">
+      <LayoutCentered>
         <div className="sticky flex w-full border-b border-inherit">
           {tabs.map((it, idx) => (
             <TabButton
@@ -105,7 +105,7 @@ const MePage: NextPage = () => {
                 content.fetchNextPage as unknown as () => Promise<void>,
             })}
         </div>
-      </div>
+      </LayoutCentered>
     </LayoutWithNav>
   );
 };

@@ -84,6 +84,18 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
   );
 };
 
+interface LayoutCenteredProps {
+  children: ReactNode;
+}
+
+export const LayoutCentered = ({ children }: LayoutCenteredProps) => {
+  return (
+    <div className="mx-auto flex h-full w-full flex-col border-neutral-200 dark:border-neutral-700 md:max-w-screen-md md:border-x">
+      {children}
+    </div>
+  );
+};
+
 const AuthView = () => (
   <button
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
