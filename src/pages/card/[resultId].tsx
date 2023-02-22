@@ -1,7 +1,7 @@
 import { type NextPage } from "next";
 
 import { api } from "../../utils/api";
-import { CollectionUnblockedCard } from "../../components/Card";
+import { CollectionUnblockedCard } from "../../components/Collection";
 import { BaseLayout } from "../../components/Layout";
 import { PlayLink } from "../../components/Link";
 import { useRouter } from "next/router";

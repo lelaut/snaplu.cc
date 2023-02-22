@@ -2,19 +2,25 @@ import { type CSSProperties } from "react";
 import Link from "next/link";
 import InfiniteLoader from "react-window-infinite-loader";
 import AutoSizer from "react-virtualized-auto-sizer";
-import { Grid, type GridCellRenderer } from "react-virtualized";
+import {
+  Grid,
+  List,
+  WindowScroller,
+  type GridCellRenderer,
+  type ListRowRenderer,
+} from "react-virtualized";
 
-import { type CardModel } from "../utils/models";
+import { type MonthlyProfit, type CardModel } from "../utils/models";
 import { currency } from "../utils/format";
 import { ArtistLink } from "./Link";
 import { Spin } from "./Spin";
+import { MonthlyProfitChart } from "./Chart";
 
 export const MIN_CARD_WIDTH = 250;
 export const CARD_ASPECT = 1.5;
-export const CARDS_PER_LINE =
-  typeof window !== "undefined"
-    ? Math.floor(window.innerWidth / MIN_CARD_WIDTH)
-    : 1;
+
+export const cardsPerLine = (width: number) =>
+  Math.max(Math.floor(width / MIN_CARD_WIDTH), 1);
 
 interface CardProps {
   card?: CardModel;
@@ -136,7 +142,8 @@ export const CardsGrid = ({
   fetchNextPage,
   reference,
 }: CardsGridProps) => {
-  const cardWidth = width / CARDS_PER_LINE;
+  const _cardsPerLine = cardsPerLine(width);
+  const cardWidth = width / _cardsPerLine;
   const cardHeight = cardWidth * CARD_ASPECT;
 
   async function loadMoreItems(
@@ -161,7 +168,7 @@ export const CardsGrid = ({
     columnIndex,
     style,
   }) => {
-    const idx = columnIndex + CARDS_PER_LINE * rowIndex;
+    const idx = columnIndex + _cardsPerLine * rowIndex;
     const card = cards[idx];
 
     return (
@@ -188,7 +195,7 @@ export const CardsGrid = ({
               <Grid
                 cellRenderer={rowRender}
                 columnWidth={cardWidth}
-                columnCount={CARDS_PER_LINE}
+                columnCount={_cardsPerLine}
                 // style={{ top: navHeight + 1 }}
                 height={height}
                 onSectionRendered={({
@@ -202,14 +209,14 @@ export const CardsGrid = ({
                   rowOverscanStopIndex,
                 }) => {
                   const visibleStartIndex =
-                    rowStartIndex * CARDS_PER_LINE + columnStartIndex;
+                    rowStartIndex * _cardsPerLine + columnStartIndex;
                   const visibleStopIndex =
-                    rowStopIndex * CARDS_PER_LINE + columnStopIndex;
+                    rowStopIndex * _cardsPerLine + columnStopIndex;
                   const overscanStartIndex =
-                    rowOverscanStartIndex * CARDS_PER_LINE +
+                    rowOverscanStartIndex * _cardsPerLine +
                     columnOverscanStartIndex;
                   const overscanStopIndex =
-                    rowOverscanStopIndex * CARDS_PER_LINE +
+                    rowOverscanStopIndex * _cardsPerLine +
                     columnOverscanStopIndex;
 
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -224,7 +231,7 @@ export const CardsGrid = ({
                 // noContentRenderer={this._noContentRenderer}
                 overscanRowCount={4}
                 rowHeight={cardHeight}
-                rowCount={Math.floor(cards.length / CARDS_PER_LINE)}
+                rowCount={Math.floor(cards.length / _cardsPerLine)}
                 width={width}
               />
             )}
@@ -241,5 +248,102 @@ export const CardsGrid = ({
         <Spin size={20} />
       </div>
     </div>
+  );
+};
+
+interface CreatorCollectionListProps {
+  collections: {
+    name: string;
+    image: string;
+    months: MonthlyProfit[];
+    link: string;
+  }[];
+  isFetchingNextPage: boolean;
+  loadMoreItems: () => Promise<void>;
+  scrollProvider: any;
+  width: number;
+}
+
+export const CreatorCollectionList = ({
+  collections,
+  isFetchingNextPage,
+  loadMoreItems,
+  scrollProvider,
+  width,
+}: CreatorCollectionListProps) => {
+  const rowCount = collections.length;
+  const ROW_HEIGHT = 212;
+
+  const rowRenderer: ListRowRenderer = ({ key, index, style }) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const collection = collections[index];
+
+    if (typeof collection === "undefined") {
+      return <div key={key} style={style} />;
+    }
+
+    return (
+      <div
+        key={key}
+        style={style}
+        className="border-b border-neutral-200 dark:border-neutral-700"
+      >
+        <MonthlyProfitChart
+          // TODO: make a link to the collection
+          title={collection.name}
+          data={collection.months}
+          width={width}
+        />
+      </div>
+    );
+  };
+
+  return (
+    <InfiniteLoader
+      isItemLoaded={(i) =>
+        i > collections.length ? isFetchingNextPage : false
+      }
+      itemCount={collections.length + 1}
+      loadMoreItems={loadMoreItems}
+    >
+      {({ onItemsRendered, ref }) => (
+        <WindowScroller ref={ref} scrollElement={scrollProvider}>
+          {({ height, isScrolling, onChildScroll, scrollTop }) => (
+            <AutoSizer disableHeight>
+              {({ width }) => (
+                // TODO: fix this issue, it is using @types/react@17 and not
+                // @types/react@18 so you will need to enforce it.
+                // See https://github.com/bvaughn/react-virtualized/issues/1746
+                <List
+                  autoHeight
+                  rowHeight={ROW_HEIGHT}
+                  rowCount={rowCount}
+                  rowRenderer={rowRenderer}
+                  isScrolling={isScrolling}
+                  scrollTop={scrollTop}
+                  onScroll={onChildScroll}
+                  overscanRowCount={2}
+                  width={width}
+                  height={height}
+                  onRowsRendered={({
+                    startIndex,
+                    stopIndex,
+                    overscanStartIndex,
+                    overscanStopIndex,
+                  }) => {
+                    onItemsRendered({
+                      visibleStartIndex: startIndex,
+                      visibleStopIndex: stopIndex,
+                      overscanStartIndex,
+                      overscanStopIndex,
+                    });
+                  }}
+                />
+              )}
+            </AutoSizer>
+          )}
+        </WindowScroller>
+      )}
+    </InfiniteLoader>
   );
 };

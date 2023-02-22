@@ -39,7 +39,7 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
     <>
       <nav
         ref={navRef}
-        className="fixed z-50 flex w-screen items-center gap-4 border-neutral-200 bg-neutral-50/80 p-2 text-neutral-900 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-50 md:border-b md:p-4"
+        className="fixed z-50 flex w-screen items-center gap-4 border-b border-neutral-200 bg-neutral-50/80 p-2 text-neutral-900 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-50 md:p-4"
       >
         <div className="flex flex-1 gap-2 md:flex-wrap md:gap-4">
           <Logo />
@@ -91,7 +91,7 @@ const AuthView = () => (
       // TODO: add actual auth handling, e.g. https://refine.dev/blog/nextauth-google-github-authentication-nextjs/
       await signIn("google");
     }}
-    className="rounded bg-neutral-800 px-4 py-1 text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900"
+    className="rounded bg-neutral-800 px-4 py-1 text-neutral-50 drop-shadow-lg dark:bg-neutral-50 dark:text-neutral-900"
   >
     Enter
   </button>

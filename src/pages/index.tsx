@@ -5,7 +5,7 @@ import Head from "next/head";
 import { api } from "../utils/api";
 import { LayoutWithNav } from "../components/Layout";
 import { useWindowDimensions } from "../utils/hooks";
-import { CARDS_PER_LINE, CardsGrid } from "../components/Card";
+import { cardsPerLine, CardsGrid } from "../components/Collection";
 import { type CardModel } from "../utils/models";
 
 const HomePage: NextPage = () => {
@@ -17,7 +17,9 @@ const HomePage: NextPage = () => {
   const explore = api.explore.cards.useInfiniteQuery(
     {
       reference,
-      cardsPerLine: CARDS_PER_LINE,
+      cardsPerLine: cardsPerLine(
+        typeof window !== "undefined" ? window.innerWidth : 1
+      ),
     },
     {
       getNextPageParam: (it) => it.nextCursor,

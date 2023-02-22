@@ -9,7 +9,7 @@ import Link from "next/link";
 import {
   CollectionBlockedCard,
   CollectionUnblockedCard,
-} from "../../components/Card";
+} from "../../components/Collection";
 import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
 import { PlayLink } from "../../components/Link";
 import { fakeCollections } from "../../utils/fake";
