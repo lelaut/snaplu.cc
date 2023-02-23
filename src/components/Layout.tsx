@@ -19,7 +19,7 @@ export const BaseLayout = ({
 }) => {
   return (
     <main
-      className="h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
+      className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
       style={style}
     >
       {children}

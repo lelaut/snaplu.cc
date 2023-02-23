@@ -40,7 +40,7 @@ const CreatePage: NextPage = () => {
   return (
     <LayoutWithNav>
       <LayoutCentered>
-        <div className="flex flex-col gap-8 p-4 sm:p-8">
+        <div className="flex flex-col gap-8 border-inherit p-4 sm:p-8">
           <DescribeSection
             title="Create Collection"
             content="Quisque ac massa sit amet eros lobortis vulputate. Vestibulum eget
@@ -69,7 +69,7 @@ const CreatePage: NextPage = () => {
             />
           </div>
 
-          <div className="flex flex-col gap-2 rounded-lg border p-4 shadow-sm">
+          <div className="flex flex-col gap-2 rounded-lg border border-inherit p-4 shadow-sm">
             <DescribeSection
               title="Collection Cards"
               content="Donec gravida vulputate convallis. Ut feugiat bibendum luctus.
@@ -90,25 +90,34 @@ const CreatePage: NextPage = () => {
             </UploadField>
 
             {files.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-black/20 p-16 opacity-20">
+              <div className="flex flex-col items-center justify-center gap-2 rounded-lg bg-neutral-200 p-16 opacity-20 dark:bg-neutral-700">
                 <Empty size={56} />
                 <p className="text-sm ">No cards yet...</p>
               </div>
             ) : (
               <div>
-                <ul className="flex flex-col gap-2">
+                <ul className="flex flex-wrap gap-2">
                   {files.map((it, i) => (
                     <li
                       key={i}
-                      className="flex justify-between gap-2 rounded bg-black/20 px-4 py-1 text-xs opacity-70"
+                      className="flex flex-col justify-between gap-2 rounded bg-neutral-200 p-2 text-xs opacity-70 dark:bg-neutral-700"
+                      style={{ width: 150, height: 200 }}
                     >
-                      <div className="flex min-w-0 gap-4">
-                        {/* TODO: use close icon */}
-                        <p>X</p>
-                        <p className="truncate">{it}</p>
+                      <div className="flex flex-1 justify-between">
+                        <button className="h-min">x</button>
+
+                        <p className="h-min rounded bg-green-400 px-1">
+                          Uploaded
+                        </p>
                       </div>
+                      <p className="truncate">{it}</p>
+                      {/* <div className="flex min-w-0 gap-4"> */}
+                      {/* TODO: use close icon */}
+                      {/* <p>X</p>
+                        <p className="truncate">{it}</p>
+                      </div> */}
                       {/* TODO: change based on the status */}
-                      <p className="rounded-full bg-green-200 px-2">Uploaded</p>
+                      {/* <p className="rounded-full bg-green-200 px-2">Uploaded</p> */}
                     </li>
                   ))}
                 </ul>

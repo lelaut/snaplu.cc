@@ -36,6 +36,7 @@ export const TextField = ({
             style={{ minHeight: 100 }}
             value={value}
             onChange={handleChange}
+            placeholder={placeholder}
           />
         ) : (
           <>
@@ -106,7 +107,7 @@ export const UploadField = ({
         multiple={multiple}
         className="hidden"
         onChange={handleChange}
-        accept="image/jpeg"
+        // accept="image/jpeg"
       />
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
