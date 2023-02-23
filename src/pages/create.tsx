@@ -1,13 +1,17 @@
 import { NextPage } from "next";
 import { useState } from "react";
+
+import { CARD_ASPECT } from "../components/Collection";
 import { SubmitField, TextField, UploadField } from "../components/Field";
-import { Empty } from "../components/Icons";
+import { Close, Empty, Spin } from "../components/Icons";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
+
+const MINI_CARD_WIDTH = 175;
 
 const CreatePage: NextPage = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<string[]>([]);
+  const [files, setFiles] = useState<Uploadable[]>([]);
   const [nameError, setNameError] = useState<string | undefined>();
   const [descriptionError, setDescriptionError] = useState<
     string | undefined
@@ -22,17 +26,41 @@ const CreatePage: NextPage = () => {
     setDescription(newDescription);
   };
 
-  const handleFilesReceive = (_files: FileList) => {
-    const newFiles = [];
+  const handleFilesReceive = (received: FileList) => {
+    for (const fileReceived of received) {
+      if (!files.find((f) => f.name === fileReceived.name)) {
+        setFiles(
+          files.concat([
+            { name: fileReceived.name, status: "evaluating", progress: 0 },
+          ])
+        );
 
-    for (const file of _files) {
-      if (!files.includes(file.name)) {
-        newFiles.push(file.name);
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          const previewUrl = e.target?.result;
+
+          if (typeof previewUrl === "string") {
+            setFiles((f) =>
+              f.map((it) =>
+                it.name === fileReceived.name ? { ...it, previewUrl } : it
+              )
+            );
+          } else {
+            setFiles((f) =>
+              f.map((it) =>
+                it.name === fileReceived.name ? { ...it, status: "error" } : it
+              )
+            );
+          }
+        };
+        reader.readAsDataURL(fileReceived);
       }
     }
-    console.log({ newFiles, _files });
+  };
 
-    setFiles(files.concat(newFiles));
+  const handleDelete = (idx: number) => {
+    setFiles(files.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = () => {};
@@ -96,28 +124,30 @@ const CreatePage: NextPage = () => {
               </div>
             ) : (
               <div>
-                <ul className="flex flex-wrap gap-2">
+                <ul className="flex flex-wrap justify-center gap-2">
                   {files.map((it, i) => (
                     <li
                       key={i}
-                      className="flex flex-col justify-between gap-2 rounded bg-neutral-200 p-2 text-xs opacity-70 dark:bg-neutral-700"
-                      style={{ width: 150, height: 200 }}
+                      className="flex flex-col justify-between gap-2 rounded bg-neutral-200 text-xs shadow-lg dark:bg-neutral-700"
+                      style={{
+                        width: MINI_CARD_WIDTH,
+                        height: MINI_CARD_WIDTH * CARD_ASPECT,
+                      }}
                     >
-                      <div className="flex flex-1 justify-between">
-                        <button className="h-min">x</button>
+                      <div
+                        className="flex flex-1 justify-between rounded-t bg-white/20 bg-contain p-2"
+                        style={{ backgroundImage: `url("${it.previewUrl}")` }}
+                      >
+                        <button
+                          className="h-min"
+                          onClick={() => handleDelete(i)}
+                        >
+                          <Close size={12} />
+                        </button>
 
-                        <p className="h-min rounded bg-green-400 px-1">
-                          Uploaded
-                        </p>
+                        <StatusProgress value={it} />
                       </div>
-                      <p className="truncate">{it}</p>
-                      {/* <div className="flex min-w-0 gap-4"> */}
-                      {/* TODO: use close icon */}
-                      {/* <p>X</p>
-                        <p className="truncate">{it}</p>
-                      </div> */}
-                      {/* TODO: change based on the status */}
-                      {/* <p className="rounded-full bg-green-200 px-2">Uploaded</p> */}
+                      <p className="truncate px-2 pb-2">{it.name}</p>
                     </li>
                   ))}
                 </ul>
@@ -148,3 +178,50 @@ const DescribeSection = ({ title, content }: DescribeSectionProps) => (
     <p className="text-sm opacity-80">{content}</p>
   </section>
 );
+
+interface Uploadable {
+  name: string;
+  status: "uploaded" | "uploading" | "evaluating" | "error";
+  progress: number;
+  previewUrl?: string;
+}
+
+interface StatusProgressProps {
+  value: Uploadable;
+}
+
+const CONFIG_FROM_STATUS: Record<
+  Uploadable["status"],
+  { color: string; label: string }
+> = {
+  error: { color: "red", label: "error" },
+  evaluating: { color: "yellow", label: "evaluating" },
+  uploading: { color: "blue", label: "uploading" },
+  uploaded: { color: "green", label: "uploaded" },
+};
+
+const StatusProgress = ({ value }: StatusProgressProps) => {
+  if (typeof value.previewUrl === "undefined") {
+    return (
+      <div className="h-min rounded bg-gray-200 p-1 text-gray-600">
+        <Spin size={10} />
+      </div>
+    );
+  }
+
+  const { color, label } = CONFIG_FROM_STATUS[value.status];
+
+  if (!color || !label) throw new Error(`Invalid status: ${value.status}`);
+
+  return (
+    <div
+      className={`bg-${color}-200 flex h-min items-center gap-1 rounded px-1 text-${color}-600`}
+    >
+      {value.progress < 100 && <Spin size={10} />}
+      <p>
+        {label}
+        {value.progress < 100 && <span> {value.progress}%</span>}
+      </p>
+    </div>
+  );
+};
