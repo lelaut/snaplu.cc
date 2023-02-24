@@ -1,0 +1,3 @@
+.cog
+__pycache__
+model.torchscript.pt
