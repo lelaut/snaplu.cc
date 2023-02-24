@@ -7,7 +7,7 @@ from torchvision import transforms
 class Predictor(BasePredictor):
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
-        self.model = load("./sscd_disc_mixup.torchscript.pt")
+        self.model = load("./model.torchscript.pt")
         normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225],
         )
