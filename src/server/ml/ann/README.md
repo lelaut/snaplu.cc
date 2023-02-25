@@ -33,3 +33,7 @@ rm -rf volumes
 ```console
 CFLAGS="-I /opt/homebrew/opt/openssl/include" LDFLAGS="-L /opt/homebrew/opt/openssl/lib" GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1 GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1 pip3 install -r requirements.txt
 ```
+
+## Useful links
+
+- https://github.com/currentslab/awesome-vector-search
