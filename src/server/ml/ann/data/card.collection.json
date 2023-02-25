@@ -1,0 +1,35 @@
+{
+  "collection_name": "card",
+  "schema": {
+    "name": "card",
+    "autoID": false,
+    "description": "",
+    "fields": [
+      {
+        "name": "id",
+        "description": "uuid with base64 encoding",
+        "is_primary_key": true,
+        "autoID": false,
+        "data_type": 21,
+        "type_params": [
+          {
+            "key": "max_length",
+            "value": "32"
+          }
+        ]
+      },
+      {
+        "name": "descriptor",
+        "description": "embedded vector of card thumbnail",
+        "data_type": 101,
+        "is_primary_key": false,
+        "type_params": [
+          {
+            "key": "dim",
+            "value": "512"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "collection_name": "card",
+  "field_name": "descriptor",
+  "extra_params": [
+    { "key": "metric_type", "value": "IP" },
+    { "key": "index_type", "value": "IVF_FLAT" },
+    { "key": "params", "value": "{\"nlist\":1024}" }
+  ]
+}

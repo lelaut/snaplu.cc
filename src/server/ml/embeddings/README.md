@@ -1,3 +1,7 @@
+# Vector embeddings for image similarity
+
+To run [this](https://github.com/facebookresearch/sscd-copy-detection) model on [Cog](https://github.com/replicate/cog) containers.
+
 ## Step by step
 
 First you need to download the model:
@@ -59,3 +63,4 @@ curl http://localhost:3033/predictions -X POST \
 
 - https://replicate.com/docs/guides/push-a-model
 - https://github.com/Nutlope/restorePhotos/blob/main/pages/api/generate.ts
+- https://github.com/facebookresearch/sscd-copy-detection
