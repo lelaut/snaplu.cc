@@ -40,3 +40,10 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# machine learning
+.cog
+__pycache__
+*.torchscript.pt
+**/ann/volumes
+**/ann/stub
