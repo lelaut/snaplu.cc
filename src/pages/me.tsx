@@ -47,10 +47,10 @@ const MePage: NextPage = () => {
 
   const deckCards = deck.data?.pages.flatMap((it) => it.cards) ?? [];
 
-  const contentMonths =
-    content.data?.pages[content.data?.pages.length - 1]?.months ?? [];
-  const contentCollections =
-    content.data?.pages.flatMap((it) => it.collections) ?? [];
+  const contentMonths = [];
+  // content.data?.pages[content.data?.pages.length - 1]?.months ?? [];
+  const contentCollections = [];
+  // content.data?.pages.flatMap((it) => it.collections) ?? [];
 
   // TODO: should add hash in url
   const handleTabClick = (idx: number) => {

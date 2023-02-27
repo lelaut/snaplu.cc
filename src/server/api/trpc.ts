@@ -42,7 +42,13 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
     session: opts.session,
     prisma,
     // TODO: move this to the protected one?
-    s3: new S3Client({ region: env.AWS_S3_REGION }),
+    s3: new S3Client({
+      region: env.AWS_S3_REGION,
+      endpoint:
+        env.NODE_ENV !== "production"
+          ? "http://s3-website.localhost.localstack.cloud:4566/"
+          : undefined,
+    }),
   };
 };
 

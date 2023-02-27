@@ -41,7 +41,11 @@ export const collectionRouter = createTRPCRouter({
           id: collectionId,
           name: input.name,
           description: input.description,
-          ownerId: userId,
+          producer: {
+            connect: {
+              id: userId,
+            },
+          },
           cards: {
             create: cards,
           },
@@ -62,14 +66,14 @@ export const collectionRouter = createTRPCRouter({
 
   // TODO: Create images embeddings
   confirm: protectedProcedure
-    .input(z.string().uuid())
+    .input(z.string())
     .mutation(async ({ input: collectionId, ctx }) => {
       const userId = ctx.session.user.id;
       const userName = ctx.session.user.name ?? "none";
       const command = new ListObjectsV2Command({
         Bucket: env.AWS_S3_BUCKET,
         Delimiter: "/",
-        Prefix: `card/${userId}/${collectionId}`,
+        Prefix: `card/${userId}/${collectionId}/`,
       });
       const response = await ctx.s3.send(command);
       const everyCardWasUploaded =
