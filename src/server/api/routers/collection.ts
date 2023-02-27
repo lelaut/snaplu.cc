@@ -29,7 +29,9 @@ export const collectionRouter = createTRPCRouter({
               Bucket: env.AWS_S3_BUCKET,
               Key: `card/${userId}/${collectionId}/${id}`,
             });
-            const url = await getSignedUrl(ctx.s3, command);
+            const url = await getSignedUrl(ctx.s3, command, {
+              expiresIn: 24 * 60 * 60,
+            });
 
             return { id, name, url };
           }
