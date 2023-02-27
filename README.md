@@ -26,3 +26,13 @@ You can check out the [create-t3-app GitHub repository](https://github.com/t3-os
 ## How do I deploy this?
 
 Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+
+### First deployment.
+
+1. To configure s3 to enable CORS
+
+```console
+awslocal s3api put-bucket-cors --bucket snaplucc-dev --cors-configuration file://s3.cors.config.json
+```
+
+TODO: This should be in Terraform...
