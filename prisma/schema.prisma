@@ -20,13 +20,30 @@ model Collection {
 
     name        String
     description String
-    ownerId     String
+    producerId  String
     confirmed   Boolean @default(false)
 
-    owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-    cards Card[]
+    producer Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+    cards    Card[]
+    profit   CollectionProfit[]
 
-    @@unique([name, ownerId])
+    @@unique([name, producerId])
+}
+
+
+model CollectionProfit {
+    collectionId String
+    period       DateTime //@db.Date
+    updatedAt    DateTime @default(now())
+    profit       Decimal
+
+    // NOTE: needed for optimization of some queries...
+    producerId String
+
+    collection Collection @relation(fields: [collectionId], references: [id])
+
+    // collection Collection 
+    @@id([collectionId, period])
 }
 
 model Card {
@@ -40,6 +57,14 @@ model Card {
     collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
     @@unique([name, collectionId])
+}
+
+// TODO: add payment information
+model Producer {
+    id     String @id
+
+    user          User @relation(fields: [id], references: [id], onDelete: Cascade)
+    collections   Collection[]
 }
 
 // Necessary for Next auth
@@ -77,7 +102,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    collections   Collection[]
+    producer      Producer?
 }
 
 model VerificationToken {
