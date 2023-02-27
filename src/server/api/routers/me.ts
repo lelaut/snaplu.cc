@@ -2,22 +2,21 @@ import { z } from "zod";
 import { v4 as uuid } from "uuid";
 
 import { type MonthlyProfit, type CardModel } from "../../../utils/models";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
   fakeDelay,
   fakeDeposits,
   fakeMonthlyProfits,
 } from "../../../utils/fake";
 
-// TODO: change this to be `protectedProcedure`
 export const meRouter = createTRPCRouter({
-  credit: publicProcedure.query(() =>
+  credit: protectedProcedure.query(() =>
     fakeDelay(() => ({
       lastDeposits: fakeDeposits().slice(0, 5),
     }))
   ),
 
-  deck: publicProcedure
+  deck: protectedProcedure
     .input(
       z.object({
         cardsPerLine: z.number().positive(),
@@ -61,7 +60,7 @@ export const meRouter = createTRPCRouter({
       }))
     ),
 
-  content: publicProcedure
+  content: protectedProcedure
     .input(
       z.object({
         cursor: z.number().nullish(),

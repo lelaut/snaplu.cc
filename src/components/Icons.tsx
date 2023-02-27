@@ -1,5 +1,11 @@
-export const Spin = ({ size }: { size: number }) => {
-  return (
+interface SpinProps {
+  size: number;
+
+  label?: string;
+}
+
+export const Spin = ({ size, label }: SpinProps) => {
+  const icon = (
     <svg
       className="animate-spin"
       fill="none"
@@ -21,6 +27,17 @@ export const Spin = ({ size }: { size: number }) => {
       ></path>
     </svg>
   );
+
+  if (label) {
+    return (
+      <div className="flex items-center gap-1">
+        {icon}
+        <p className="text-xs">{label}</p>
+      </div>
+    );
+  }
+
+  return icon;
 };
 
 interface EmptyProps {

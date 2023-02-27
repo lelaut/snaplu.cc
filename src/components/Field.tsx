@@ -1,10 +1,11 @@
-import { ChangeEvent, ReactElement, useRef } from "react";
+import { type ChangeEvent, type ReactElement, useRef } from "react";
 
 interface TextFieldProps {
   value: string;
   onChange: (value: string) => void;
   name: string;
 
+  disabled?: boolean;
   error?: string;
   multiline?: boolean;
   placeholder?: string;
@@ -14,6 +15,7 @@ export const TextField = ({
   value,
   onChange,
   name,
+  disabled,
   error,
   multiline,
   placeholder,
@@ -37,6 +39,7 @@ export const TextField = ({
             value={value}
             onChange={handleChange}
             placeholder={placeholder}
+            disabled={disabled}
           />
         ) : (
           <>
@@ -46,6 +49,7 @@ export const TextField = ({
               placeholder={placeholder}
               value={value}
               onChange={handleChange}
+              disabled={disabled}
             />
             <div
               className={`w-1 bg-black/50 peer-focus:bg-blue-500 dark:bg-white/50 dark:peer-focus:bg-blue-500${
@@ -116,7 +120,7 @@ export const UploadField = ({
 
 interface SubmitFieldProps {
   children: ReactElement | string;
-  onSubmit: () => void;
+  onSubmit: () => Promise<void> | void;
 
   disabled?: boolean;
 }
@@ -127,14 +131,15 @@ export const SubmitField = ({
   disabled,
 }: SubmitFieldProps) => {
   return (
-    <div className="flex flex-row-reverse text-white">
-      <button
-        onClick={onSubmit}
-        className="cursor-pointer rounded bg-blue-500 py-1 px-4 shadow-2xl shadow-blue-500"
-        disabled={disabled}
-      >
-        {children}
-      </button>
-    </div>
+    <button
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      onClick={onSubmit}
+      className={`cursor-pointer rounded ${
+        disabled ? "bg-gray-500" : "bg-blue-500"
+      } py-1 px-4 text-white${disabled ? "" : " shadow-2xl shadow-blue-500"}`}
+      disabled={disabled}
+    >
+      {children}
+    </button>
   );
 };

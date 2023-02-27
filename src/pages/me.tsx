@@ -13,6 +13,7 @@ import { Spin } from "../components/Icons";
 import { currency, dayjs } from "../utils/format";
 import { type MonthlyProfit, type CardModel } from "../utils/models";
 import { MonthlyProfitChart } from "../components/Chart";
+import { signOut } from "next-auth/react";
 
 const tabs = [
   { label: "Credit", render: CreditTab },
@@ -60,15 +61,23 @@ const MePage: NextPage = () => {
   return (
     <LayoutWithNav>
       <LayoutCentered>
-        <div className="sticky flex w-full border-b border-inherit">
-          {tabs.map((it, idx) => (
-            <TabButton
-              isSelected={it.label === tab.label}
-              key={it.label}
-              label={it.label}
-              onClick={() => handleTabClick(idx)}
-            />
-          ))}
+        <div className="sticky flex w-full justify-between border-b border-inherit">
+          <div className="flex">
+            {tabs.map((it, idx) => (
+              <TabButton
+                isSelected={it.label === tab.label}
+                key={it.label}
+                label={it.label}
+                onClick={() => handleTabClick(idx)}
+              />
+            ))}
+          </div>
+          <button
+            className="px-4 text-red-500 hover:text-red-400"
+            onClick={() => signOut({ callbackUrl: "/" })}
+          >
+            Exit
+          </button>
         </div>
         <div
           ref={tabRef}

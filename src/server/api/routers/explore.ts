@@ -14,7 +14,6 @@ export const exploreRouter = createTRPCRouter({
         cursor: z.number().nullish(),
       })
     )
-    // TODO: add a small random delay before sending response
     .query<{
       cards: CardModel[];
       cursorStep: number;

@@ -1,14 +1,21 @@
-import { NextPage } from "next";
+import { type NextPage } from "next";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 import { CARD_ASPECT } from "../components/Collection";
 import { SubmitField, TextField, UploadField } from "../components/Field";
 import { Close, Empty, Spin } from "../components/Icons";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
+import { api } from "../utils/api";
 
 const MINI_CARD_WIDTH = 175;
 
 const CreatePage: NextPage = () => {
+  const router = useRouter();
+
+  const createCollection = api.collection.create.useMutation();
+  const confirmCollection = api.collection.confirm.useMutation();
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<Uploadable[]>([]);
@@ -17,6 +24,8 @@ const CreatePage: NextPage = () => {
     string | undefined
   >();
   const [uploadError, setUploadError] = useState<string | undefined>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitPerc, setSubmitPerc] = useState("0");
 
   const handleNameChange = (newName: string) => {
     setName(newName);
@@ -28,10 +37,10 @@ const CreatePage: NextPage = () => {
 
   const handleFilesReceive = (received: FileList) => {
     for (const fileReceived of received) {
-      if (!files.find((f) => f.name === fileReceived.name)) {
+      if (!files.find((f) => f.file.name === fileReceived.name)) {
         setFiles(
           files.concat([
-            { name: fileReceived.name, status: "evaluating", progress: 0 },
+            { file: fileReceived, status: "evaluating", progress: 0 },
           ])
         );
 
@@ -43,13 +52,15 @@ const CreatePage: NextPage = () => {
           if (typeof previewUrl === "string") {
             setFiles((f) =>
               f.map((it) =>
-                it.name === fileReceived.name ? { ...it, previewUrl } : it
+                it.file.name === fileReceived.name ? { ...it, previewUrl } : it
               )
             );
           } else {
             setFiles((f) =>
               f.map((it) =>
-                it.name === fileReceived.name ? { ...it, status: "error" } : it
+                it.file.name === fileReceived.name
+                  ? { ...it, status: "error" }
+                  : it
               )
             );
           }
@@ -63,7 +74,57 @@ const CreatePage: NextPage = () => {
     setFiles(files.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = () => {};
+  const handleSubmit = async () => {
+    const progressStep = 100 / (2 + files.length);
+
+    setIsSubmitting(true);
+    setSubmitPerc(String(0));
+
+    const createResponse = await createCollection.mutateAsync({
+      name,
+      description,
+      cardsName: files.map((it) => it.file.name) as [string, ...string[]],
+    });
+
+    setSubmitPerc(String(progressStep));
+
+    const promises: Promise<void>[] = [];
+
+    for (const [cardName, uploadLink] of Object.entries(
+      createResponse.cardsNameToUploadLink
+    )) {
+      const file = files.find((it) => it.file.name === cardName);
+
+      if (typeof file === "undefined") {
+        // TODO: finish
+        return;
+      }
+
+      promises.push(
+        (async () => {
+          const uploadResponse = await fetch(uploadLink, {
+            method: "PUT",
+            body: file.file,
+          });
+
+          if (!uploadResponse.ok) {
+            // TODO: show error.
+            return;
+          }
+
+          setSubmitPerc((v) => String(+v + progressStep));
+        })()
+      );
+    }
+
+    await Promise.all(promises);
+
+    const confirmResponse = await confirmCollection.mutateAsync(
+      createResponse.collectionId
+    );
+
+    await router.replace(confirmResponse.redirect);
+  };
 
   return (
     <LayoutWithNav>
@@ -86,6 +147,7 @@ const CreatePage: NextPage = () => {
               error={nameError}
               onChange={handleNameChange}
               placeholder="Catchy name..."
+              disabled={isSubmitting}
             />
             <TextField
               name="Description"
@@ -94,6 +156,7 @@ const CreatePage: NextPage = () => {
               onChange={handleDescriptionChange}
               multiline
               placeholder="Some great description..."
+              disabled={isSubmitting}
             />
           </div>
 
@@ -113,6 +176,7 @@ const CreatePage: NextPage = () => {
               multiple
               onReceive={handleFilesReceive}
               error={uploadError}
+              disabled={isSubmitting}
             >
               Upload
             </UploadField>
@@ -136,7 +200,9 @@ const CreatePage: NextPage = () => {
                     >
                       <div
                         className="flex flex-1 justify-between rounded-t bg-white/20 bg-contain p-2"
-                        style={{ backgroundImage: `url("${it.previewUrl}")` }}
+                        style={{
+                          backgroundImage: `url("${it.previewUrl ?? ""}")`,
+                        }}
                       >
                         <button
                           className="h-min"
@@ -147,7 +213,7 @@ const CreatePage: NextPage = () => {
 
                         <StatusProgress value={it} />
                       </div>
-                      <p className="truncate px-2 pb-2">{it.name}</p>
+                      <p className="truncate px-2 pb-2">{it.file.name}</p>
                     </li>
                   ))}
                 </ul>
@@ -158,7 +224,26 @@ const CreatePage: NextPage = () => {
             )}
           </div>
 
-          <SubmitField onSubmit={handleSubmit}>Submit</SubmitField>
+          <div className="flex items-center gap-4">
+            <div
+              className={`flex-1 ${
+                isSubmitting ? "opacity-100" : "opacity-0"
+              } relative rounded bg-neutral-200 transition-opacity dark:bg-neutral-700`}
+            >
+              <div
+                className="l-0 absolute h-full rounded bg-indigo-400 shadow-2xl shadow-indigo-500"
+                style={{ width: `${submitPerc}%` }}
+              />
+              <p className="relative z-10 py-px px-2 text-xs">{submitPerc}%</p>
+            </div>
+            <SubmitField onSubmit={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Spin label="Submitting" size={12} />
+              ) : (
+                <>Submit</>
+              )}
+            </SubmitField>
+          </div>
         </div>
       </LayoutCentered>
     </LayoutWithNav>
@@ -180,10 +265,10 @@ const DescribeSection = ({ title, content }: DescribeSectionProps) => (
 );
 
 interface Uploadable {
-  name: string;
   status: "uploaded" | "uploading" | "evaluating" | "error";
   progress: number;
   previewUrl?: string;
+  file: File;
 }
 
 interface StatusProgressProps {

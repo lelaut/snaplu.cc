@@ -17,7 +17,9 @@
  */
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import { type Session } from "next-auth";
+import { S3Client } from "@aws-sdk/client-s3";
 
+import { env } from "../../env.mjs";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
 
@@ -39,6 +41,8 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
+    // TODO: move this to the protected one?
+    s3: new S3Client({ region: env.AWS_S3_REGION }),
   };
 };
 

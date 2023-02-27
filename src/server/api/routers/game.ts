@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const gameRouter = createTRPCRouter({
-  // TODO: change to `protectedProcedure`s
-  gameplay: publicProcedure.input(z.string().uuid()).query(() => {
+  gameplay: protectedProcedure.input(z.string().uuid()).query(() => {
     const id = uuid();
 
     return {

@@ -4,7 +4,6 @@ import {
   type GetStaticPaths,
   type InferGetStaticPropsType,
 } from "next";
-import Link from "next/link";
 import {
   CollectionBlockedCard,
   CollectionUnblockedCard,
@@ -12,7 +11,7 @@ import {
 
 import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
 import { ArtistLink, PlayLink } from "../../components/Link";
-import { fakeCollectionCards, fakeCollections } from "../../utils/fake";
+import { fakeCollections } from "../../utils/fake";
 
 const CollectionPage: NextPage<
   InferGetStaticPropsType<typeof getStaticProps>

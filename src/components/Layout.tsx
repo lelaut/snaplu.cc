@@ -1,4 +1,5 @@
 import { useSession, signIn } from "next-auth/react";
+import Link from "next/link";
 import {
   useRef,
   type ReactNode,
@@ -47,11 +48,13 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
         </div>
         <div className="flex gap-4">
           <div className="hidden gap-2 md:flex">
-            <AuthView />
+            {!isAuthenticated && <EnterButton />}
           </div>
           <ThemeSwitch />
           {isAuthenticated && (
-            <div className="h-10 w-10 rounded-full bg-green-500" />
+            <Link href="/me">
+              <button className="h-10 w-10 rounded-full bg-green-500" />
+            </Link>
           )}
         </div>
       </nav>
@@ -76,7 +79,7 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
             </p>
           </div>
           <div className="flex gap-2">
-            <AuthView />
+            {!isAuthenticated && <EnterButton />}
           </div>
         </div>
       )}
@@ -96,12 +99,13 @@ export const LayoutCentered = ({ children }: LayoutCenteredProps) => {
   );
 };
 
-const AuthView = () => (
+const EnterButton = () => (
   <button
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     onClick={async () => {
-      // TODO: add actual auth handling, e.g. https://refine.dev/blog/nextauth-google-github-authentication-nextjs/
-      await signIn("google");
+      await signIn("google", {
+        callbackUrl: "http://localhost:3000",
+      });
     }}
     className="rounded bg-neutral-800 px-4 py-1 text-neutral-50 drop-shadow-lg dark:bg-neutral-50 dark:text-neutral-900"
   >
