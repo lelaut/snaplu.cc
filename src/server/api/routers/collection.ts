@@ -9,7 +9,6 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { env } from "../../../env.mjs";
 import { bucketKey } from "../../../utils/format.js";
 
-// TODO: change to `protectedProcedure`
 export const collectionRouter = createTRPCRouter({
   create: protectedProcedure
     .input(

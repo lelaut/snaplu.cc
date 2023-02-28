@@ -5,6 +5,7 @@ export const config = {
 };
 
 export default function handler(req: NextRequest) {
+  // TODO: this should process from a job queue made in postgres
   // TODO: read all cards that have no embedding field
   // TODO: generate the embedding vector
   // TODO: insert the vector into ANN provider
