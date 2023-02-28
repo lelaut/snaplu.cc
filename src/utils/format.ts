@@ -17,3 +17,9 @@ _dayjs.extend(_relativeTime);
 export const dayjs = _dayjs;
 
 // export { default as dayjs } from "dayjs";
+
+export const bucketKey = (
+  userId: string,
+  collectionId: string,
+  cardId?: string
+) => `card/${userId}/${collectionId}/${cardId ?? ""}`;

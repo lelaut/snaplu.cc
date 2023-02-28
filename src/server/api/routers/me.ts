@@ -1,10 +1,14 @@
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 import { type CardModel } from "../../../utils/models";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { fakeDelay, fakeDeposits } from "../../../utils/fake";
 import dayjs from "dayjs";
+import { env } from "../../../env.mjs";
+import { bucketKey } from "../../../utils/format";
 
 export const meRouter = createTRPCRouter({
   credit: protectedProcedure.query(() =>
@@ -24,38 +28,47 @@ export const meRouter = createTRPCRouter({
       cards: CardModel[];
       cursorStep: number;
       nextCursor: number;
-    }>(({ input }) =>
-      fakeDelay(() => ({
-        cards: Array.from(Array(input.cardsPerLine * 10).keys()).map<CardModel>(
-          (generation) => {
-            const id = uuid();
-            const creator = {
-              username: `creator_${generation}`,
-              link: `/${`creator_${generation}`}`,
-            };
-            const collection = {
-              slug: `collection_${generation}`,
-              size: Math.floor(Math.random() * 10 + 10),
-              playcost: +(Math.random() * 0.9 + 0.1).toFixed(2),
-              link: `/${creator.username}/${`collection_${generation}`}`,
-              creator,
-            };
-
-            return {
-              reference: "",
-              id,
-              generation: generation + (input.cursor ?? 0),
-
-              link: `/${creator.username}/${collection.slug}#${id}`,
-              slug: `card_${generation}`,
-              collection,
-            };
+    }>(({ input, ctx }) => {
+      const cursorStep = Math.min(20, input.cardsPerLine * 4);
+      const userId = ctx.session.user.id;
+      const deck = ctx.prisma.consumerCard.findMany({
+        select: {
+          card: {
+            id: true,
+            name: true,
+            url: true,
+            collectionId: true,
+          },
+        },
+        where: {
+          consumerId: userId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: input.cursor ?? 0,
+        take: cursorStep,
+      });
+      const deckWithAllowedUrl = deck.map((card) => ({
+        ...card,
+        url: getSignedUrl(
+          ctx.s3,
+          new GetObjectCommand({
+            Bucket: env.AWS_S3_BUCKET,
+            Key: bucketKey(userId, card.collectionId, card.id),
+          }),
+          {
+            expiresIn: 5 * 60, // TODO: move this to .env file
           }
         ),
-        cursorStep: input.cardsPerLine * 10,
-        nextCursor: (input.cursor ?? 0) + input.cardsPerLine * 10,
-      }))
-    ),
+      }));
+
+      return {
+        cards: deckWithAllowedUrl,
+        cursorStep: cursorStep,
+        nextCursor: (input.cursor ?? 0) + cursorStep,
+      };
+    }),
 
   content: protectedProcedure
     .input(
