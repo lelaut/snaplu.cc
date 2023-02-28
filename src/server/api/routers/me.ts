@@ -1,21 +1,35 @@
 import { z } from "zod";
-import { v4 as uuid } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 
-import { type CardModel } from "../../../utils/models";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { fakeDelay, fakeDeposits } from "../../../utils/fake";
-import dayjs from "dayjs";
 import { env } from "../../../env.mjs";
-import { bucketKey } from "../../../utils/format";
+import { bucketKey, dayjs } from "../../../utils/format";
 
 export const meRouter = createTRPCRouter({
-  credit: protectedProcedure.query(() =>
-    fakeDelay(() => ({
-      lastDeposits: fakeDeposits().slice(0, 5),
-    }))
-  ),
+  creditPurchases: protectedProcedure
+    .input(z.object({ cursor: z.number().nullish() }))
+    .query(async ({ input, ctx }) => {
+      const cursorStep = 10;
+      const userId = ctx.session.user.id;
+
+      const purchases = await ctx.prisma.creditPurchase.findMany({
+        where: {
+          userId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: input.cursor,
+        take: cursorStep,
+      });
+
+      return {
+        purchases,
+        cursorStep: cursorStep,
+        nextCursor: (input.cursor ?? 0) + cursorStep,
+      };
+    }),
 
   deck: protectedProcedure
     .input(
@@ -24,14 +38,10 @@ export const meRouter = createTRPCRouter({
         cursor: z.number().nullish(),
       })
     )
-    .query<{
-      cards: CardModel[];
-      cursorStep: number;
-      nextCursor: number;
-    }>(({ input, ctx }) => {
+    .query(async ({ input, ctx }) => {
       const cursorStep = Math.min(20, input.cardsPerLine * 4);
       const userId = ctx.session.user.id;
-      const deck = ctx.prisma.consumerCard.findMany({
+      const deck = await ctx.prisma.consumerCard.findMany({
         select: {
           card: {
             id: true,
@@ -49,19 +59,21 @@ export const meRouter = createTRPCRouter({
         skip: input.cursor ?? 0,
         take: cursorStep,
       });
-      const deckWithAllowedUrl = deck.map((card) => ({
-        ...card,
-        url: getSignedUrl(
-          ctx.s3,
-          new GetObjectCommand({
-            Bucket: env.AWS_S3_BUCKET,
-            Key: bucketKey(userId, card.collectionId, card.id),
-          }),
-          {
-            expiresIn: 5 * 60, // TODO: move this to .env file
-          }
-        ),
-      }));
+      const deckWithAllowedUrl = Promise.all(
+        deck.map(async (card) => ({
+          ...card,
+          url: await getSignedUrl(
+            ctx.s3,
+            new GetObjectCommand({
+              Bucket: env.AWS_S3_BUCKET,
+              Key: bucketKey(userId, card.collectionId, card.id),
+            }),
+            {
+              expiresIn: 5 * 60, // TODO: move this to .env file
+            }
+          ),
+        }))
+      );
 
       return {
         cards: deckWithAllowedUrl,

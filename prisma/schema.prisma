@@ -18,14 +18,16 @@ model Collection {
     id        String   @id
     createdAt DateTime @default(now())
 
-    name        String
-    description String
-    producerId  String
-    confirmed   Boolean @default(false)
+    name             String
+    description      String
+    producerId       String
+    confirmed        Boolean @default(false)
+    gameplayPriceRef String
 
-    producer Producer           @relation(fields: [producerId], references: [id], onDelete: Cascade)
-    cards    Card[]
-    profit   CollectionProfit[]
+    producer  Producer           @relation(fields: [producerId], references: [id], onDelete: Cascade)
+    cards     Card[]
+    profit    CollectionProfit[]
+    gameplays Gameplay[]
 
     @@unique([name, producerId])
 }
@@ -55,6 +57,7 @@ model Card {
 
     collection Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
     consumers  ConsumerCard[]
+    gameplays  Gameplay[]
 
     @@unique([name, collectionId])
 }
@@ -70,10 +73,13 @@ model Producer {
 model Consumer {
     id String @id
 
-    credits Int
+    credits         BigInt
+    creditsCurrency String
 
-    user User           @relation(fields: [id], references: [id], onDelete: Cascade)
-    deck ConsumerCard[]
+    user      User             @relation(fields: [id], references: [id], onDelete: Cascade)
+    deck      ConsumerCard[]
+    purchases CreditPurchase[]
+    gameplays Gameplay[]
 }
 
 model ConsumerCard {
@@ -86,6 +92,29 @@ model ConsumerCard {
     card     Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
     @@id([consumerId, cardId])
+}
+
+model CreditPurchase {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+
+    consumerId     String
+    transactionRef String
+
+    consumer Consumer? @relation(fields: [consumerId], references: [id], onDelete: NoAction)
+}
+
+model Gameplay {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+
+    consumerId   String
+    collectionId String
+    cardId       String
+
+    consumer   Consumer   @relation(fields: [consumerId], references: [id], onDelete: NoAction)
+    collection Collection @relation(fields: [collectionId], references: [id], onDelete: NoAction)
+    card       Card       @relation(fields: [cardId], references: [id], onDelete: NoAction)
 }
 
 // Necessary for Next auth
