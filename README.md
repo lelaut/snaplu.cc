@@ -35,4 +35,22 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 awslocal s3api put-bucket-cors --bucket snaplucc-dev --cors-configuration file://s3.cors.config.json
 ```
 
-TODO: This should be in Terraform...
+### Roadmap
+
+- [ ] Backend tests
+- [ ] Generic interface for `payment` and `storage`
+- [ ] Integrate new backend into frontend
+- [ ] Use Docker Compose to load containers for the development environment(including localstack stuff)
+- [ ] Use Terraform to automate infrastructure deployment
+- [ ] Add CI with GitHub Actions
+- [ ] Add CD with GitHub Actions
+- [ ] Enhance frontend design
+- [ ] Frontend tests
+- [ ] Integrate Sentry only
+
+### Study
+
+- [ ] PM2
+- [ ] OpenTelemetry
+  - https://vercel.com/docs/concepts/observability/otel-overview/quickstart
+  - https://signoz.io/docs/instrumentation/javascript/#using-the-all-in-one-auto-instrumentation-library
