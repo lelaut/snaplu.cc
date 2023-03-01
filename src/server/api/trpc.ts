@@ -23,7 +23,7 @@ import { prisma } from "../db";
 import { stripe } from "../payment";
 import { s3 } from "../storage";
 
-type CreateContextOptions = {
+export type CreateContextOptions = {
   session: Session | null;
 };
 
@@ -37,7 +37,7 @@ type CreateContextOptions = {
  *
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
-const createInnerTRPCContext = (opts: CreateContextOptions) => {
+export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,

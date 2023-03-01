@@ -22,17 +22,19 @@ export const collectionRouter = createTRPCRouter({
         price: z.object({
           unitAmount: z.number().int(),
           currency: z.enum(supportedCurrencies),
-          forOtherCurrencies: z.object(
-            supportedCurrencies.reduce(
-              (acc, it) => ({
-                ...acc,
-                [it]: z.object({
-                  unitAmount: z.number().int(),
+          forOtherCurrencies: z
+            .object(
+              supportedCurrencies.reduce(
+                (acc, it) => ({
+                  ...acc,
+                  [it]: z.object({
+                    unitAmount: z.number().int(),
+                  }),
                 }),
-              }),
-              {}
+                {}
+              )
             )
-          ),
+            .optional(),
         }),
       })
     )
