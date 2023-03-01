@@ -8,7 +8,10 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { env } from "../../../env.mjs";
 import { bucketKey } from "../../../utils/format.js";
+import { supportedCurrencies } from "../../payment";
 
+// TODO: add a slug to the collection model, this should also have a URL preview when
+// creating a collection.
 export const collectionRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -16,6 +19,21 @@ export const collectionRouter = createTRPCRouter({
         name: z.string(),
         description: z.string(),
         cardsName: z.string().array().nonempty(),
+        price: z.object({
+          unitAmount: z.number().int(),
+          currency: z.enum(supportedCurrencies),
+          forOtherCurrencies: z.object(
+            supportedCurrencies.reduce(
+              (acc, it) => ({
+                ...acc,
+                [it]: z.object({
+                  unitAmount: z.number().int(),
+                }),
+              }),
+              {}
+            )
+          ),
+        }),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -38,11 +56,32 @@ export const collectionRouter = createTRPCRouter({
         )
       );
 
+      const priceResponse = await ctx.stripe.prices.create({
+        unit_amount: input.price.unitAmount,
+        currency: input.price.currency,
+        metadata: {
+          userId,
+          collectionId,
+        },
+        product_data: {
+          name: input.name,
+          metadata: {
+            userId,
+            collectionId,
+          },
+          // TODO: make sure this is right.
+          tax_code: env.STRIPE_TAX_CODE,
+          unit_label: input.name, // TODO: make it better?
+        },
+        currency_options: input.price.forOtherCurrencies,
+      });
+
       await ctx.prisma.collection.create({
         data: {
           id: collectionId,
           name: input.name,
           description: input.description,
+          gameplayPriceRef: priceResponse.id,
           producer: {
             connect: {
               id: userId,
