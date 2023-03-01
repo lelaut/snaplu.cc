@@ -3,12 +3,12 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { nanoid } from "nanoid";
 import { type Prisma } from "@prisma/client";
-import { env } from "../../../env.mjs";
-
-import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
-// TODO: change to `protectedProcedure`
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { env } from "../../../env.mjs";
+import { bucketKey } from "../../../utils/format.js";
+
 export const collectionRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
@@ -27,7 +27,7 @@ export const collectionRouter = createTRPCRouter({
             const id = nanoid();
             const command = new PutObjectCommand({
               Bucket: env.AWS_S3_BUCKET,
-              Key: `card/${userId}/${collectionId}/${id}`,
+              Key: bucketKey(userId, collectionId, id),
             });
             const url = await getSignedUrl(ctx.s3, command, {
               expiresIn: 24 * 60 * 60,
@@ -75,7 +75,7 @@ export const collectionRouter = createTRPCRouter({
       const command = new ListObjectsV2Command({
         Bucket: env.AWS_S3_BUCKET,
         Delimiter: "/",
-        Prefix: `card/${userId}/${collectionId}/`,
+        Prefix: bucketKey(userId, collectionId),
       });
       const response = await ctx.s3.send(command);
       const everyCardWasUploaded =
