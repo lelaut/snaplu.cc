@@ -17,12 +17,11 @@
  */
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import { type Session } from "next-auth";
-import { S3Client } from "@aws-sdk/client-s3";
 
-import { env } from "../../env.mjs";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
 import { stripe } from "../payment";
+import { s3 } from "../storage";
 
 type CreateContextOptions = {
   session: Session | null;
@@ -43,14 +42,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
     session: opts.session,
     prisma,
     stripe,
-    // TODO: move this to the protected one?
-    s3: new S3Client({
-      region: env.AWS_S3_REGION,
-      endpoint:
-        env.NODE_ENV !== "production"
-          ? "http://s3-website.localhost.localstack.cloud:4566/"
-          : undefined,
-    }),
+    s3,
   };
 };
 

@@ -2,6 +2,7 @@ import Stripe from "stripe";
 
 import { env } from "../env.mjs";
 
+// TODO: decouple this into a generic interface instead, name `payment`
 export const stripe = new Stripe(env.STRIPE_API_KEY, {
   apiVersion: "2022-11-15",
 });
