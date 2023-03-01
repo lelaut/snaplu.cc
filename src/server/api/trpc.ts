@@ -22,6 +22,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { env } from "../../env.mjs";
 import { getServerAuthSession } from "../auth";
 import { prisma } from "../db";
+import { stripe } from "../payment";
 
 type CreateContextOptions = {
   session: Session | null;
@@ -41,6 +42,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
     prisma,
+    stripe,
     // TODO: move this to the protected one?
     s3: new S3Client({
       region: env.AWS_S3_REGION,
