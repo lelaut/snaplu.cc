@@ -14,7 +14,7 @@ export const gameRouter = createTRPCRouter({
         },
       });
 
-      if (typeof gameplay === "undefined" || gameplay.consumerId !== userId) {
+      if (gameplay === null || gameplay.consumerId !== userId) {
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
@@ -29,12 +29,15 @@ export const gameRouter = createTRPCRouter({
       const userId = ctx.session.user.id;
 
       // TODO: check to see if user has credit
-      // TODO: randomly pick a card from the collection
+
+      const cardId = (await ctx.prisma
+        .$queryRaw`SELECT id FROM "Card" ORDER BY RANDOM() LIMIT 1;`) as string;
+
       // TODO: subtract user credit and create gameplay, all in a
       // single transaction
 
       const gameplay = await ctx.prisma.gameplay.create({
-        data: { consumerId: userId, collectionId: input.collectionId },
+        data: { consumerId: userId, collectionId: input.collectionId, cardId },
       });
 
       return { gameplay };
