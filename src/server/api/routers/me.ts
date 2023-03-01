@@ -15,12 +15,12 @@ export const meRouter = createTRPCRouter({
 
       const purchases = await ctx.prisma.creditPurchase.findMany({
         where: {
-          userId,
+          consumerId: userId,
         },
         orderBy: {
           createdAt: "desc",
         },
-        skip: input.cursor,
+        skip: input.cursor ?? 0,
         take: cursorStep,
       });
 
@@ -44,10 +44,12 @@ export const meRouter = createTRPCRouter({
       const deck = await ctx.prisma.consumerCard.findMany({
         select: {
           card: {
-            id: true,
-            name: true,
-            url: true,
-            collectionId: true,
+            select: {
+              id: true,
+              name: true,
+              url: true,
+              collectionId: true,
+            },
           },
         },
         where: {
@@ -60,13 +62,13 @@ export const meRouter = createTRPCRouter({
         take: cursorStep,
       });
       const deckWithAllowedUrl = Promise.all(
-        deck.map(async (card) => ({
-          ...card,
+        deck.map(async (item) => ({
+          ...item.card,
           url: await getSignedUrl(
             ctx.s3,
             new GetObjectCommand({
               Bucket: env.AWS_S3_BUCKET,
-              Key: bucketKey(userId, card.collectionId, card.id),
+              Key: bucketKey(userId, item.card.collectionId, item.card.id),
             }),
             {
               expiresIn: +env.AWS_S3_GET_EXP,
