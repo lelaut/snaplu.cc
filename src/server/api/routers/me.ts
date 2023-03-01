@@ -69,7 +69,7 @@ export const meRouter = createTRPCRouter({
               Key: bucketKey(userId, card.collectionId, card.id),
             }),
             {
-              expiresIn: 5 * 60, // TODO: move this to .env file
+              expiresIn: +env.AWS_S3_GET_EXP,
             }
           ),
         }))

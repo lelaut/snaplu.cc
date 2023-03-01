@@ -24,6 +24,8 @@ const server = z.object({
 
   AWS_S3_REGION: z.string(),
   AWS_S3_BUCKET: z.string(),
+  AWS_S3_PUT_EXP: z.string(),
+  AWS_S3_GET_EXP: z.string(),
 
   STRIPE_API_KEY: z.string(),
   STRIPE_TAX_CODE: z.string(),
@@ -52,6 +54,8 @@ const processEnv = {
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   AWS_S3_REGION: process.env.AWS_S3_REGION,
   AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
+  AWS_S3_PUT_EXP: process.env.AWS_S3_PUT_EXP,
+  AWS_S3_GET_EXP: process.env.AWS_S3_GET_EXP,
   STRIPE_API_KEY: process.env.STRIPE_API_KEY,
   STRIPE_TAX_CODE: process.env.STRIPE_TAX_CODE,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
