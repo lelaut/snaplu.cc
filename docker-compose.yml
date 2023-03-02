@@ -15,3 +15,4 @@ services:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
     command: awslocal s3api create-bucket --bucket ${AWS_S3_BUCKET}
+    # TODO: need to configure aws, see https://docs.localstack.cloud/user-guide/integrations/aws-cli/#setting-up-local-region-and-credentials-to-run-localstack

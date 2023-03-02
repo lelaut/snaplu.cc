@@ -40,12 +40,10 @@ awslocal s3api put-bucket-cors --bucket snaplucc-dev --cors-configuration file:/
 - [ ] Backend tests
 - [ ] Generic interface for `payment` and `storage`
 - [ ] Integrate new backend into frontend
-- [ ] Use Docker Compose to load containers for the development environment(including localstack stuff)
-- [ ] Use Terraform to automate infrastructure deployment
+- [ ] Use Terraform to automate infrastructure deployment(https://vercel.com/guides/integrating-terraform-with-vercel)
 - [ ] Add CI with GitHub Actions
-- [ ] Add CD with GitHub Actions
+- [ ] Add CD(for the non-vercel code) with GitHub Actions
 - [ ] Enhance frontend design
-- [ ] Frontend tests
 - [ ] Integrate Sentry only
 
 ### Study

@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { env } from "../../../env.mjs";
-import { bucketKey } from "../../../utils/format.js";
+import { bucketKey } from "../../../utils/format";
 import { supportedCurrencies } from "../../payment";
 
 // TODO: add a slug to the collection model, this should also have a URL preview when

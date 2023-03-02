@@ -2,21 +2,31 @@
  * @jest-environment node
  */
 
-import { env } from "../../../env.mjs";
+import { PrismaClient } from "@prisma/client";
+import { DeepMockProxy } from "jest-mock-extended";
+import Stripe from "stripe";
+
 import { bucketKey } from "../../../utils/format";
-import { createTestRouter } from "../../../utils/test";
-import { prismaMock as prisma } from "../../__mocks__/db.js";
+import { createTestRouter, getSignedUrlPattern } from "../../../utils/test";
+import { prisma } from "../../db";
+import { stripe } from "../../payment";
+
+const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
+const stripeMock = stripe as unknown as DeepMockProxy<Stripe>;
 
 describe("test collection router", () => {
   const USER: any = { id: "tester_id", name: "tester" };
 
   it("happy path for collection.create route", async () => {
-    const router = createTestRouter(USER);
-
-    const createCollection = prisma.collection.create.mockResolvedValue(
+    const createCollection = prismaMock.collection.create.mockResolvedValue(
       // TODO: return a real collection
       {} as any
     );
+    const createPrices = stripeMock.prices.create.mockResolvedValue({
+      id: "PRICE_ID",
+    } as any);
+
+    const router = createTestRouter(USER);
 
     const createResult = await router.collection.create({
       name: "col_name",
@@ -32,22 +42,20 @@ describe("test collection router", () => {
     // https://github.com/stripe/stripe-mock
     // use a combination of testmode and your own implementation to also
     // handle errors...
+    expect(createPrices).toHaveBeenCalledTimes(1);
 
     // Expected db changes
     expect(createCollection).toHaveBeenCalledTimes(1);
 
     // Expected result
-    expect(createResult.collectionId).toBe("nanoid_1");
-    expect(createResult.cardsNameToUploadLink).toBe({
-      card_1: `signed_url_(${JSON.stringify({
-        Bucket: env.AWS_S3_BUCKET,
-        Key: bucketKey("user_id", "nanoid_1", "nanoid_2"),
-      })})_${env.AWS_S3_PUT_EXP}_1`,
-      card_2: `signed_url_(${JSON.stringify({
-        Bucket: env.AWS_S3_BUCKET,
-        Key: bucketKey("user_id", "nanoid_1", "nanoid_3"),
-      })})_${env.AWS_S3_PUT_EXP}_2`,
-    });
+    expect(createResult.collectionId).toBe("NANO_ID");
+    expect(Object.keys(createResult.cardsNameToUploadLink).length).toBe(2);
+    expect(createResult.cardsNameToUploadLink.card_1).toMatch(
+      getSignedUrlPattern(bucketKey(USER.id, "NANO_ID", "NANO_ID"), "PutObject")
+    );
+    expect(createResult.cardsNameToUploadLink.card_2).toMatch(
+      getSignedUrlPattern(bucketKey(USER.id, "NANO_ID", "NANO_ID"), "PutObject")
+    );
   });
 
   it("create signed url fail", async () => {
@@ -68,6 +76,24 @@ describe("test collection router", () => {
 
   // TODO: try to add a custom validator to zod
   it("when card name duplicated", async () => {
+    const router = createTestRouter(USER);
+  });
+
+  it("happy path for collection.confirm route", async () => {
+    const router = createTestRouter(USER);
+
+    const confirmResponse = await router.collection.confirm("collection_id");
+  });
+
+  it("listing s3 bucket fails", async () => {
+    const router = createTestRouter(USER);
+  });
+
+  it("some content not uploaded", async () => {
+    const router = createTestRouter(USER);
+  });
+
+  it("fail to create collection", async () => {
     const router = createTestRouter(USER);
   });
 });
