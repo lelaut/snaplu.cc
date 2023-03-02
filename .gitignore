@@ -41,9 +41,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+# docker
+volume
+volumes
+
 # machine learning
 .cog
 __pycache__
 *.torchscript.pt
-**/ann/volumes
 **/ann/stub
