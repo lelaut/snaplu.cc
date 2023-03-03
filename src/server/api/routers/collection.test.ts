@@ -198,6 +198,11 @@ describe("test collection router", () => {
       },
     });
     await s3.send(command);
+    await prisma.collection.delete({
+      where: {
+        id: createResponse.collectionId,
+      },
+    });
   });
 
   // it("fail to create collection", async () => {
