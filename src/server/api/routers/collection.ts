@@ -72,7 +72,7 @@ export const collectionRouter = createTRPCRouter({
             collectionId,
           },
           // TODO: make sure this is right.
-          tax_code: env.STRIPE_TAX_CODE,
+          // tax_code: env.STRIPE_TAX_CODE,
           unit_label: input.name, // TODO: make it better?
         },
         currency_options: input.price.forOtherCurrencies,

@@ -23,12 +23,15 @@ const server = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
 
   AWS_DEFAULT_REGION: z.string(),
+  AWS_ACCESS_KEY_ID: z.string(),
   AWS_S3_BUCKET: z.string(),
   AWS_S3_PUT_EXP: z.string(),
   AWS_S3_GET_EXP: z.string(),
 
   STRIPE_API_KEY: z.string(),
   STRIPE_TAX_CODE: z.string(),
+  STRIPE_PORT: z.string(),
+  STRIPE_HOST: z.string(),
 });
 
 /**
@@ -53,11 +56,14 @@ const processEnv = {
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
   AWS_DEFAULT_REGION: process.env.AWS_DEFAULT_REGION,
+  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
   AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
   AWS_S3_PUT_EXP: process.env.AWS_S3_PUT_EXP,
   AWS_S3_GET_EXP: process.env.AWS_S3_GET_EXP,
   STRIPE_API_KEY: process.env.STRIPE_API_KEY,
   STRIPE_TAX_CODE: process.env.STRIPE_TAX_CODE,
+  STRIPE_HOST: process.env.STRIPE_HOST,
+  STRIPE_PORT: process.env.STRIPE_PORT,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 
