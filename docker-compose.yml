@@ -19,20 +19,14 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     command:
       - awslocal s3api create-bucket --bucket ${AWS_S3_BUCKET}
-  prisma:
-    image: prismagraphql/prisma:1.34
+  postgres:
+    image: postgres
     restart: always
-    ports:
-      - "${PRISMA_PORT}:${PRISMA_PORT}"
     environment:
-      PRISMA_CONFIG: |
-        managementApiSecret: __YOUR_MANAGEMENT_API_SECRET__
-        port: $PRISMA_PORT
-        databases:
-          default:
-            connector: $PRISMA_CONNECTOR
-            host: $PRISMA_HOST
-            port: $PRISMA_DB_PORT
-            user: $PRISMA_USER
-            password: $PRISMA_PASSWORD
-            connectionLimit: $PRISMA_CONN_LIMIT
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"

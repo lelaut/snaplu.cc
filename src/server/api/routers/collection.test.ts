@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import { DeepMockProxy } from "jest-mock-extended";
 import Stripe from "stripe";
 
@@ -15,7 +15,7 @@ const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
 const stripeMock = stripe as unknown as DeepMockProxy<Stripe>;
 
 describe("test collection router", () => {
-  const USER: any = { id: "tester_id", name: "tester" };
+  const USER: User = { id: "tester_id", name: "tester" } as any;
 
   it("happy path for collection.create route", async () => {
     const createCollection = prismaMock.collection.create.mockResolvedValue(

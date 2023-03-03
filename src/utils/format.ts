@@ -22,4 +22,4 @@ export const bucketKey = (
   userId: string,
   collectionId: string,
   cardId?: string
-) => `card/${userId}/${collectionId}/${cardId ?? ""}`;
+): string => `card/${userId}/${collectionId}/${cardId ?? ""}`;

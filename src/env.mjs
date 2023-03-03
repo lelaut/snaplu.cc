@@ -22,7 +22,7 @@ const server = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
 
-  AWS_S3_REGION: z.string(),
+  AWS_DEFAULT_REGION: z.string(),
   AWS_S3_BUCKET: z.string(),
   AWS_S3_PUT_EXP: z.string(),
   AWS_S3_GET_EXP: z.string(),
@@ -52,7 +52,7 @@ const processEnv = {
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-  AWS_S3_REGION: process.env.AWS_S3_REGION,
+  AWS_DEFAULT_REGION: process.env.AWS_DEFAULT_REGION,
   AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
   AWS_S3_PUT_EXP: process.env.AWS_S3_PUT_EXP,
   AWS_S3_GET_EXP: process.env.AWS_S3_GET_EXP,
