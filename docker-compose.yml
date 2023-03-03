@@ -11,8 +11,28 @@ services:
       - DEBUG=${DEBUG-}
       - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
-    command: awslocal s3api create-bucket --bucket ${AWS_S3_BUCKET}
-    # TODO: need to configure aws, see https://docs.localstack.cloud/user-guide/integrations/aws-cli/#setting-up-local-region-and-credentials-to-run-localstack
+    command:
+      - awslocal s3api create-bucket --bucket ${AWS_S3_BUCKET}
+  prisma:
+    image: prismagraphql/prisma:1.34
+    restart: always
+    ports:
+      - "${PRISMA_PORT}:${PRISMA_PORT}"
+    environment:
+      PRISMA_CONFIG: |
+        managementApiSecret: __YOUR_MANAGEMENT_API_SECRET__
+        port: $PRISMA_PORT
+        databases:
+          default:
+            connector: $PRISMA_CONNECTOR
+            host: $PRISMA_HOST
+            port: $PRISMA_DB_PORT
+            user: $PRISMA_USER
+            password: $PRISMA_PASSWORD
+            connectionLimit: $PRISMA_CONN_LIMIT
