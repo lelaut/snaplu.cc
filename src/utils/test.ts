@@ -5,10 +5,10 @@ import {
   type CreateContextOptions,
 } from "../server/api/trpc";
 
-export function createTestRouter(userId?: string) {
+export function createTestRouter(user?: { id: string; name: string }) {
   return appRouter.createCaller(
     createInnerTRPCContext({
-      session: userId ? { user: { id: userId } } : null,
+      session: user ? { user } : null,
     } as unknown as CreateContextOptions)
   );
 }

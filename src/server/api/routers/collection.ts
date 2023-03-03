@@ -9,6 +9,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { env } from "../../../env.mjs";
 import { bucketKey } from "../../../utils/format";
 import { supportedCurrencies } from "../../payment";
+import { prisma } from "../../db";
 
 // TODO: add a slug to the collection model, this should also have a URL preview when
 // creating a collection.
@@ -119,8 +120,16 @@ export const collectionRouter = createTRPCRouter({
         Prefix: bucketKey(userId, collectionId),
       });
       const response = await ctx.s3.send(command);
+      const numberOfCardsInCollection = await prisma.card.count({
+        where: {
+          collectionId,
+        },
+      });
       const everyCardWasUploaded =
-        response.Contents?.every((it) => (it.Size ?? 0) > 0) ?? false;
+        typeof response.Contents === "undefined"
+          ? false
+          : response.Contents.length === numberOfCardsInCollection &&
+            response.Contents.every((it) => (it.Size ?? 0) > 0);
 
       if (!everyCardWasUploaded) {
         throw new TRPCError({
