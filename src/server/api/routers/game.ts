@@ -22,15 +22,13 @@ export const gameRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      const command = new GetObjectCommand({
-        Bucket: env.AWS_S3_BUCKET,
-        Key: bucketKey(userId, gameplay.collectionId, gameplay.cardId),
-      });
       return {
         gameplay: {
           ...gameplay,
-          url: await getSignedUrl(ctx.s3, command, {
-            expiresIn: +env.AWS_S3_GET_EXP,
+          url: await ctx.storage.urlForFetchingCard({
+            userId,
+            collectionId: gameplay.collectionId,
+            cardId: gameplay.cardId,
           }),
         },
       };

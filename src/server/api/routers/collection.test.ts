@@ -2,15 +2,13 @@
  * @jest-environment node
  */
 
-import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { TRPCError } from "@trpc/server";
 import fs from "fs";
-import { env } from "../../../env.mjs";
 
 import { bucketKey } from "../../../utils/format";
 import { createTestRouter, getSignedUrlPattern } from "../../../utils/testing";
 import { prisma } from "../../db";
-import { s3 } from "../../storage";
+import storage from "../../storage";
 
 describe("test collection router", () => {
   const USER = { id: "tester_id", name: "tester" };
@@ -123,17 +121,11 @@ describe("test collection router", () => {
     expect(collection?.confirmed).toBe(true);
     expect(confirmResponse.redirect).toBe(`${USER.name}/NANOID_3`);
 
-    const command = new DeleteObjectsCommand({
-      Bucket: env.AWS_S3_BUCKET,
-      Delete: {
-        Objects: [
-          { Key: bucketKey(USER.id, "NANOID_3", "NANOID_4") },
-          { Key: bucketKey(USER.id, "NANOID_3", "NANOID_5") },
-        ],
-        Quiet: true,
-      },
+    await storage.deleteCollectionCards({
+      userId: USER.id,
+      collectionId: "NANOID_3",
+      cardsId: ["NANOID_4", "NANOID_5"],
     });
-    await s3.send(command);
     await prisma.collection.delete({
       where: {
         id: createResponse.collectionId,
@@ -185,17 +177,11 @@ describe("test collection router", () => {
     });
     expect(collection?.confirmed).toBe(false);
 
-    const command = new DeleteObjectsCommand({
-      Bucket: env.AWS_S3_BUCKET,
-      Delete: {
-        Objects: [
-          { Key: bucketKey(USER.id, "NANOID_3", "NANOID_4") },
-          { Key: bucketKey(USER.id, "NANOID_3", "NANOID_5") },
-        ],
-        Quiet: true,
-      },
+    await storage.deleteCollectionCards({
+      userId: USER.id,
+      collectionId: "NANOID_3",
+      cardsId: ["NANOID_4", "NANOID_5"],
     });
-    await s3.send(command);
     await prisma.collection.delete({
       where: {
         id: createResponse.collectionId,

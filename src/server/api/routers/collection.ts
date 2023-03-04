@@ -43,20 +43,16 @@ export const collectionRouter = createTRPCRouter({
       const userId = ctx.session.user.id;
       const collectionId = nanoid();
       const cards = await Promise.all(
-        input.cardsName.map<Promise<Prisma.CardCreateWithoutCollectionInput>>(
-          async (name) => {
-            const id = nanoid();
-            const command = new PutObjectCommand({
-              Bucket: env.AWS_S3_BUCKET,
-              Key: bucketKey(userId, collectionId, id),
-            });
-            const url = await getSignedUrl(ctx.s3, command, {
-              expiresIn: +env.AWS_S3_PUT_EXP,
-            });
+        input.cardsName.map(async (name) => {
+          const id = nanoid();
+          const url = await ctx.storage.urlForUploadingCard({
+            userId,
+            collectionId,
+            cardId: id,
+          });
 
-            return { id, name, url };
-          }
-        )
+          return { id, name, url };
+        })
       );
 
       const { id } = await ctx.payment.createCollectionPrice({
@@ -101,22 +97,20 @@ export const collectionRouter = createTRPCRouter({
     .mutation(async ({ input: collectionId, ctx }) => {
       const userId = ctx.session.user.id;
       const userName = ctx.session.user.name ?? "none";
-      const command = new ListObjectsV2Command({
-        Bucket: env.AWS_S3_BUCKET,
-        Delimiter: "/",
-        Prefix: bucketKey(userId, collectionId),
+      const response = await ctx.storage.getCollectionCards({
+        userId,
+        collectionId,
       });
-      const response = await ctx.s3.send(command);
       const numberOfCardsInCollection = await prisma.card.count({
         where: {
           collectionId,
         },
       });
       const everyCardWasUploaded =
-        typeof response.Contents === "undefined"
+        response.cards === null
           ? false
-          : response.Contents.length === numberOfCardsInCollection &&
-            response.Contents.every((it) => (it.Size ?? 0) > 0);
+          : response.cards.length === numberOfCardsInCollection &&
+            response.cards.every((it) => (it.size ?? 0) > 0);
 
       if (!everyCardWasUploaded) {
         throw new TRPCError({

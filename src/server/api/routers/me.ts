@@ -1,10 +1,7 @@
 import { z } from "zod";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { env } from "../../../env.mjs";
-import { bucketKey, dayjs } from "../../../utils/format";
+import { dayjs } from "../../../utils/format";
 
 export const meRouter = createTRPCRouter({
   creditPurchases: protectedProcedure
@@ -65,16 +62,11 @@ export const meRouter = createTRPCRouter({
           ...item.card,
           // TODO: create a function that generate this, so we
           // don't have any inconsistency on how this is created
-          url: await getSignedUrl(
-            ctx.s3,
-            new GetObjectCommand({
-              Bucket: env.AWS_S3_BUCKET,
-              Key: bucketKey(userId, item.card.collectionId, item.card.id),
-            }),
-            {
-              expiresIn: +env.AWS_S3_GET_EXP,
-            }
-          ),
+          url: await ctx.storage.urlForFetchingCard({
+            userId,
+            collectionId: item.card.collectionId,
+            cardId: item.card.id,
+          }),
         }))
       );
 
