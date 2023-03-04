@@ -31,8 +31,8 @@ docker compose up -d
 
 - [x] Backend tests
 - [x] Generic interfaces for `payment` and `storage`
-- [ ] Move `ml` containers to root
-- [ ] Generic interface for `ml` features
+- [x] Move `ml` containers to root
+- [x] Generic interface for `ml` features
 - [ ] Integrate new backend into frontend
 - [ ] Add missing features
   - Each card should have a rarity factor
