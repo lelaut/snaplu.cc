@@ -32,6 +32,11 @@ const server = z.object({
   STRIPE_TAX_CODE: z.string(),
   STRIPE_PORT: z.string(),
   STRIPE_HOST: z.string(),
+
+  VSEARCH_PROTOCOL: z.string(),
+  VSEARCH_HOST: z.string(),
+  VSEARCH_PORT: z.string(),
+  VSEARCH_COLLECTION: z.string(),
 });
 
 /**
@@ -64,6 +69,10 @@ const processEnv = {
   STRIPE_TAX_CODE: process.env.STRIPE_TAX_CODE,
   STRIPE_HOST: process.env.STRIPE_HOST,
   STRIPE_PORT: process.env.STRIPE_PORT,
+  VSEARCH_PROTOCOL: process.env.VSEARCH_PROTOCOL,
+  VSEARCH_HOST: process.env.VSEARCH_HOST,
+  VSEARCH_PORT: process.env.VSEARCH_PORT,
+  VSEARCH_COLLECTION: process.env.VSEARCH_COLLECTION,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 

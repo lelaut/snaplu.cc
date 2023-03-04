@@ -34,3 +34,17 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+  embedding:
+    image: embedding:latest
+    ports:
+      - ${EMBEDDING_PORT}:5000 # cog enforces the port 5000 :(
+  vector-search:
+    image: qdrant/qdrant
+    ports:
+      # HTTP port
+      - ${VSEARCH_HPORT}:6333 # defined in `vector-search.yaml`
+      # gRPC port
+      - ${VSEARCH_RPORT}:6334 # defined in `vector-search.yaml`
+    volumes:
+      - "./vector-search.yaml:/qdrant/config/production.yaml"
+      - "./collection.json:/qdrant/collection.json"
