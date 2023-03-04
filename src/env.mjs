@@ -33,6 +33,9 @@ const server = z.object({
   STRIPE_PORT: z.string(),
   STRIPE_HOST: z.string(),
 
+  EMBEDDING_HOST: z.string(),
+  EMBEDDING_PORT: z.string(),
+
   VSEARCH_PROTOCOL: z.string(),
   VSEARCH_HOST: z.string(),
   VSEARCH_PORT: z.string(),
@@ -69,6 +72,8 @@ const processEnv = {
   STRIPE_TAX_CODE: process.env.STRIPE_TAX_CODE,
   STRIPE_HOST: process.env.STRIPE_HOST,
   STRIPE_PORT: process.env.STRIPE_PORT,
+  EMBEDDING_HOST: process.env.EMBEDDING_HOST,
+  EMBEDDING_PORT: process.env.EMBEDDING_PORT,
   VSEARCH_PROTOCOL: process.env.VSEARCH_PROTOCOL,
   VSEARCH_HOST: process.env.VSEARCH_HOST,
   VSEARCH_PORT: process.env.VSEARCH_PORT,
