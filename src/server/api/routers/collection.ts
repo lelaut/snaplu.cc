@@ -23,7 +23,7 @@ export const collectionRouter = createTRPCRouter({
         price: z.object({
           unitAmount: z.number().int(),
           currency: z.enum(supportedCurrencies),
-          forOtherCurrencies: z
+          others: z
             .object(
               supportedCurrencies.reduce(
                 (acc, it) => ({
@@ -59,24 +59,11 @@ export const collectionRouter = createTRPCRouter({
         )
       );
 
-      const priceResponse = await ctx.stripe.prices.create({
-        unit_amount: input.price.unitAmount,
-        currency: input.price.currency,
-        metadata: {
-          userId,
-          collectionId,
-        },
-        product_data: {
-          name: input.name,
-          metadata: {
-            userId,
-            collectionId,
-          },
-          // TODO: make sure this is right.
-          // tax_code: env.STRIPE_TAX_CODE,
-          unit_label: input.name, // TODO: make it better?
-        },
-        currency_options: input.price.forOtherCurrencies,
+      const { id } = await ctx.payment.createCollectionPrice({
+        userId,
+        collectionId,
+        collectionName: input.name,
+        price: input.price as any,
       });
 
       await ctx.prisma.collection.create({
@@ -84,14 +71,14 @@ export const collectionRouter = createTRPCRouter({
           id: collectionId,
           name: input.name,
           description: input.description,
-          gameplayPriceRef: priceResponse.id,
+          gameplayPriceRef: id,
           producer: {
             connect: {
               id: userId,
             },
           },
           cards: {
-            create: cards,
+            create: cards.map((card) => ({ id: card.id, name: card.name })),
           },
         },
       });

@@ -13,7 +13,10 @@ export function createTestRouter(user?: { id: string; name: string }) {
   );
 }
 
-export function getSignedUrlPattern(key: string, action: "PutObject") {
+export function getSignedUrlPattern(
+  key: string,
+  action: "PutObject" | "GetObject"
+) {
   return new RegExp(
     `http:\/\/${
       env.AWS_S3_BUCKET

@@ -51,7 +51,6 @@ model Card {
     id String @id
 
     name         String
-    url          String
     collectionId String
     embeddedAt   DateTime?
 

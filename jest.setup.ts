@@ -15,5 +15,3 @@ jest.mock("nanoid", () => {
 //   stripe: mockDeep<Stripe>(),
 //   supportedCurrencies: ["brl", "usd"],
 // }));
-
-jest.mock("./src/server/payment");

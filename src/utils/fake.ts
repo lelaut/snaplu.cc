@@ -1,5 +1,8 @@
+import { type PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
-import { MonthlyProfit } from "./models";
+
+import { type MonthlyProfit } from "./models";
+import { dayjs } from "./format";
 
 export function fakeArray(min: number, max: number) {
   return Array.from(
@@ -57,4 +60,81 @@ export function fakeMonthlyProfits(): MonthlyProfit[] {
     month: Math.round(Math.random() * 11) as MonthlyProfit["month"],
     profit: Math.floor(Math.random() * 1000),
   }));
+}
+
+type FakeCollectionOptions = { producerId: string } & (
+  | { cards: true }
+  | { cards: true; consumers: true; consumerId: string }
+  | { profit: true }
+);
+
+export async function createFakeCollection(
+  prisma: PrismaClient,
+  options: FakeCollectionOptions
+) {
+  const collectionId = "FAKE_COL";
+  const cards =
+    "cards" in options ? fakeArray(2, 10).map((i) => `FAKE_CARD_${i}`) : [];
+  const consumers =
+    "consumers" in options
+      ? fakeArray(2, cards.length).map((i) => `FAKE_CON_CARD_${i}`)
+      : [];
+  const profits =
+    "profit" in options
+      ? fakeArray(24, 100).map((i) => ({
+          period: dayjs()
+            .subtract(i + 1, "month")
+            .toDate(),
+          value: Math.random() * 1000 + 100,
+        }))
+      : [];
+
+  await prisma.collection.create({
+    data: {
+      id: collectionId,
+      name: "col_name",
+      description: "col_description",
+      producerId: options.producerId,
+      gameplayPriceRef: "PRICE_REF",
+    },
+  });
+
+  await Promise.all(
+    cards.map(($) =>
+      prisma.card.create({
+        data: {
+          id: $,
+          name: $,
+          collectionId,
+        },
+      })
+    )
+  );
+
+  await Promise.all(
+    consumers.map(($, i) =>
+      prisma.consumerCard.create({
+        data: {
+          consumerId: options.consumerId,
+          cardId: cards[i],
+        },
+      })
+    )
+  );
+
+  await Promise.all(
+    profits.map(($) =>
+      prisma.collectionProfit.create({
+        data: {
+          collectionId,
+          period: $.period,
+          profit: $.value,
+          updatedAt: $.period,
+          producerId: options.producerId,
+        },
+      })
+    )
+  );
+
+  return { collectionId, cards, consumers, profits };
 }

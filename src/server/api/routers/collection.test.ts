@@ -8,7 +8,7 @@ import fs from "fs";
 import { env } from "../../../env.mjs";
 
 import { bucketKey } from "../../../utils/format";
-import { createTestRouter, getSignedUrlPattern } from "../../../utils/test";
+import { createTestRouter, getSignedUrlPattern } from "../../../utils/testing";
 import { prisma } from "../../db";
 import { s3 } from "../../storage";
 
@@ -32,8 +32,6 @@ describe("test collection router", () => {
     const deleteUsers = prisma.user.deleteMany();
 
     await prisma.$transaction([deleteUsers]);
-
-    await prisma.$disconnect();
   });
 
   it("happy path for collection.create route", async () => {

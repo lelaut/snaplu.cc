@@ -47,7 +47,6 @@ export const meRouter = createTRPCRouter({
             select: {
               id: true,
               name: true,
-              url: true,
               collectionId: true,
             },
           },
@@ -61,9 +60,11 @@ export const meRouter = createTRPCRouter({
         skip: input.cursor ?? 0,
         take: cursorStep,
       });
-      const deckWithAllowedUrl = Promise.all(
+      const deckWithAllowedUrl = await Promise.all(
         deck.map(async (item) => ({
           ...item.card,
+          // TODO: create a function that generate this, so we
+          // don't have any inconsistency on how this is created
           url: await getSignedUrl(
             ctx.s3,
             new GetObjectCommand({
@@ -101,7 +102,7 @@ export const meRouter = createTRPCRouter({
           },
           where: {
             producerId: userId,
-            updatedAt: {
+            period: {
               gte: dayjs().startOf("month").subtract(5, "month").toDate(),
             },
           },

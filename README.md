@@ -37,7 +37,7 @@ awslocal s3api put-bucket-cors --bucket snaplucc-dev --cors-configuration file:/
 
 ### Roadmap
 
-- [ ] Backend tests
+- [x] Backend tests
 - [ ] Generic interface for `payment` and `storage`
 - [ ] Integrate new backend into frontend
 - [ ] Use Terraform to automate infrastructure deployment(https://vercel.com/guides/integrating-terraform-with-vercel)
