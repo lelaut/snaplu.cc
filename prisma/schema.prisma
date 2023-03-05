@@ -63,16 +63,21 @@ model Card {
 
 // TODO: add payment information
 model Producer {
-    id String @id
+    id          String @id
+    nickname    String
+    description String
+    slug        String @unique
 
     user        User         @relation(fields: [id], references: [id], onDelete: Cascade)
     collections Collection[]
+
+    @@index([slug], type: Hash)
 }
 
 model Consumer {
     id String @id
 
-    credits         BigInt
+    credits         Int
     creditsCurrency String
 
     user      User             @relation(fields: [id], references: [id], onDelete: Cascade)
@@ -98,7 +103,7 @@ model CreditPurchase {
     createdAt DateTime @default(now())
 
     consumerId     String
-    unitAmount     BigInt
+    unitAmount     Int
     currency       String
     transactionRef String
 

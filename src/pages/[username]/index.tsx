@@ -12,6 +12,7 @@ import {
 } from "../../components/Collection";
 import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
 import { PlayLink } from "../../components/Link";
+import { prisma } from "../../server/db";
 import { fakeCollections } from "../../utils/fake";
 
 const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
@@ -82,6 +83,28 @@ export const getStaticProps: GetStaticProps<{
     }[];
   };
 }> = ({ params }) => {
+  if (typeof params === "undefined") {
+    return { props: {} };
+  }
+
+  const data = prisma.producer.findUnique({
+    where: {
+      slug: params.username as string,
+    },
+    select: {
+      id: true,
+      nickname: true,
+      description: true,
+
+      collections: {
+        select: {
+          name: true,
+          description: true,
+          gameplayPriceRef: true,
+        },
+      },
+    },
+  });
   const username = params?.username as string;
 
   return {
@@ -100,9 +123,15 @@ export const getStaticProps: GetStaticProps<{
   };
 };
 
-export const getStaticPaths: GetStaticPaths = () => {
+export const getStaticPaths: GetStaticPaths = async () => {
+  const users = await prisma.producer.findMany({
+    select: {
+      slug: true,
+    },
+  });
+
   return {
-    paths: [{ params: { username: "creator_0" } }],
+    paths: users.map(($) => ({ params: { username: $.slug } })),
     fallback: "blocking",
   };
 };
