@@ -3,12 +3,13 @@ import { type ChangeEvent, type ReactElement, useRef } from "react";
 interface TextFieldProps {
   value: string;
   onChange: (value: string) => void;
-  name: string;
 
+  name?: string;
   disabled?: boolean;
   error?: string;
   multiline?: boolean;
   placeholder?: string;
+  posfix?: string;
 }
 
 export const TextField = ({
@@ -19,6 +20,7 @@ export const TextField = ({
   error,
   multiline,
   placeholder,
+  posfix,
 }: TextFieldProps) => {
   function handleChange(
     e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>
@@ -27,12 +29,12 @@ export const TextField = ({
   }
 
   return (
-    <div>
-      <p>{name}</p>
-      <div className="group flex flex-row-reverse">
+    <div className="flex-1">
+      {name && <p>{name}</p>}
+      <div className="group flex flex-row-reverse bg-neutral-200 dark:bg-neutral-700">
         {multiline ? (
           <textarea
-            className={`w-full rounded-sm border border-black/50 bg-neutral-200 px-1 focus:border-blue-500 dark:border-white/50 dark:bg-neutral-700 dark:focus:border-blue-500${
+            className={`w-full rounded-sm border border-black/50 bg-transparent px-1 focus:border-blue-500 dark:border-white/50 dark:focus:border-blue-500${
               error ? " border-red-400 dark:border-red-400" : ""
             }`}
             style={{ minHeight: 100 }}
@@ -43,9 +45,10 @@ export const TextField = ({
           />
         ) : (
           <>
+            {posfix && <p className="px-2 opacity-50">{posfix}</p>}
             <input
               type="text"
-              className="peer w-full rounded-r-sm bg-neutral-200 px-1 dark:bg-neutral-700"
+              className="peer w-full bg-transparent px-1"
               placeholder={placeholder}
               value={value}
               onChange={handleChange}

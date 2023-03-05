@@ -38,7 +38,8 @@ const server = z.object({
 
   VSEARCH_PROTOCOL: z.string(),
   VSEARCH_HOST: z.string(),
-  VSEARCH_PORT: z.string(),
+  VSEARCH_HPORT: z.string(),
+  VSEARCH_RPORT: z.string(),
   VSEARCH_COLLECTION: z.string(),
 });
 
@@ -76,7 +77,8 @@ const processEnv = {
   EMBEDDING_PORT: process.env.EMBEDDING_PORT,
   VSEARCH_PROTOCOL: process.env.VSEARCH_PROTOCOL,
   VSEARCH_HOST: process.env.VSEARCH_HOST,
-  VSEARCH_PORT: process.env.VSEARCH_PORT,
+  VSEARCH_HPORT: process.env.VSEARCH_HPORT,
+  VSEARCH_RPORT: process.env.VSEARCH_RPORT,
   VSEARCH_COLLECTION: process.env.VSEARCH_COLLECTION,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };

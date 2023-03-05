@@ -25,6 +25,7 @@ import storage from "../storage";
 
 export type CreateContextOptions = {
   session: Session | null;
+  ip?: string;
 };
 
 /**
@@ -40,6 +41,7 @@ export type CreateContextOptions = {
 export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
+    ip: opts.ip,
     prisma,
     payment,
     storage,
@@ -54,12 +56,15 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
  */
 export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   const { req, res } = opts;
-
+  const forwarded = req.headers["x-forwarded-for"] as string;
+  const ip = forwarded ? forwarded.split(/, /)[0] : req.socket.remoteAddress;
   // Get the session from the server using the getServerSession wrapper function
+
   const session = await getServerAuthSession({ req, res });
 
   return createInnerTRPCContext({
     session,
+    ip,
   });
 };
 

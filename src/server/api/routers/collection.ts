@@ -1,14 +1,9 @@
 import { z } from "zod";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { nanoid } from "nanoid";
-import { type Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { env } from "../../../env.mjs";
-import { bucketKey } from "../../../utils/format";
-import { supportedCurrencies } from "../../payment";
+import { supportedCurrencies } from "../../../utils/payment";
 import { prisma } from "../../db";
 
 // TODO: add a slug to the collection model, this should also have a URL preview when
@@ -19,7 +14,7 @@ export const collectionRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         description: z.string(),
-        cardsName: z.string().array().nonempty(),
+        numberOfCards: z.number().gt(0),
         price: z.object({
           unitAmount: z.number().int(),
           currency: z.enum(supportedCurrencies),

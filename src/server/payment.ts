@@ -1,12 +1,7 @@
 import Stripe from "stripe";
 
 import { env } from "../env.mjs";
-
-// TODO: get this from Stripe API: https://stripe.com/docs/api/country_specs/list?lang=node
-// export const supportedCurrencies: [string, ...string[]] = ["brl", "usd"];
-
-export const supportedCurrencies = ["brl", "usd"] as const;
-export type SupportedCurrencies = (typeof supportedCurrencies)[number];
+import { type SupportedCurrencies } from "../utils/payment";
 
 interface CreateCollectionPriceParams {
   userId: string;

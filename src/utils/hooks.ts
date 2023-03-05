@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type RefObject, useCallback, useEffect, useState } from "react";
 
 function getWindowDimensions() {
   const { innerWidth: width, innerHeight: height } = window;
@@ -26,4 +26,24 @@ export function useWindowDimensions() {
   }, []);
 
   return windowDimensions;
+}
+
+export function useOutsideEvent<
+  T extends { contains: (target: EventTarget | null) => boolean }
+>(ref: RefObject<T>, onOutside: () => void) {
+  const handler = useCallback(onOutside, [onOutside]);
+
+  useEffect(() => {
+    function handleClickOutside(ev: MouseEvent) {
+      if (ref.current && !ref.current.contains(ev.target)) {
+        handler();
+      }
+    }
+    // Bind the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Unbind the event listener on clean up
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, handler]);
 }

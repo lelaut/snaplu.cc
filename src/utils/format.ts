@@ -7,8 +7,8 @@ export const currency = new Intl.NumberFormat("en-US", {
   //maximumFractionDigits: 0, // (causes 2500.99 to be printed as $2,501)
 });
 
-export const formatBigintMoney = (n: bigint) =>
-  (n / 100n).toString() + "," + (n % 100n).toString().padStart(2, "0");
+export const formatBigintMoney = (n: bigint | number) =>
+  (Number(n) / 100).toFixed(2);
 
 import _dayjs from "dayjs";
 import _duration from "dayjs/plugin/duration";

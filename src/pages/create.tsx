@@ -1,12 +1,19 @@
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { List, type ListRowRenderer } from "react-virtualized";
 
 import { CARD_ASPECT } from "../components/Collection";
 import { SubmitField, TextField, UploadField } from "../components/Field";
 import { Close, Empty, Spin } from "../components/Icons";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
+import Modal from "../components/Modal";
+import {
+  type SupportedCurrencies,
+  supportedCurrencies,
+} from "../utils/payment";
 import { api } from "../utils/api";
+import { formatBigintMoney } from "../utils/format";
 
 const MINI_CARD_WIDTH = 175;
 
@@ -18,14 +25,32 @@ const CreatePage: NextPage = () => {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [price, setPrice] = useState<
+    { currency: SupportedCurrencies; unitAmount: number }[]
+  >([{ currency: "usd", unitAmount: 0 }]);
   const [files, setFiles] = useState<Uploadable[]>([]);
+
   const [nameError, setNameError] = useState<string | undefined>();
   const [descriptionError, setDescriptionError] = useState<
     string | undefined
   >();
   const [uploadError, setUploadError] = useState<string | undefined>();
+
+  const [selectingCurrency, setSelectingCurrency] = useState<
+    SupportedCurrencies | undefined
+  >();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitPerc, setSubmitPerc] = useState("0");
+
+  const currenciesWithPrice = useMemo(
+    () => price.map(($) => $.currency),
+    [price]
+  );
+  const currenciesWithoutPrice = useMemo(
+    () => supportedCurrencies.filter(($) => !currenciesWithPrice.includes($)),
+    [currenciesWithPrice]
+  );
 
   const handleNameChange = (newName: string) => {
     setName(newName);
@@ -33,6 +58,38 @@ const CreatePage: NextPage = () => {
 
   const handleDescriptionChange = (newDescription: string) => {
     setDescription(newDescription);
+  };
+
+  const handlePriceChange = (priceIdx: number, newValue: string) => {
+    setPrice(
+      price.map(($, i) =>
+        i === priceIdx
+          ? {
+              currency: $.currency,
+              unitAmount: +newValue.replace(/[^0-9]/gm, ""),
+            }
+          : $
+      )
+    );
+  };
+
+  const handlePriceAddIntent = () => {
+    setSelectingCurrency(currenciesWithoutPrice[0] ?? "brl");
+  };
+
+  const stopSelectingCurrency = () => {
+    setSelectingCurrency(undefined);
+  };
+
+  const addPriceForSelectedCurrency = () => {
+    setPrice(
+      price.concat({ currency: selectingCurrency ?? "brl", unitAmount: 0 })
+    );
+    stopSelectingCurrency();
+  };
+
+  const handlePriceRemove = (priceIdx: number) => {
+    setPrice(price.filter((_, i) => i !== priceIdx));
   };
 
   const handleFilesReceive = (received: FileList) => {
@@ -83,7 +140,12 @@ const CreatePage: NextPage = () => {
     const createResponse = await createCollection.mutateAsync({
       name,
       description,
-      cardsName: files.map((it) => it.file.name) as [string, ...string[]],
+      numberOfCards: files.length,
+      price: {
+        currency: price[0]?.currency ?? "usd",
+        unitAmount: price[0]?.unitAmount ?? 10,
+        others: price.slice(1),
+      },
     });
 
     setSubmitPerc(String(progressStep));
@@ -126,6 +188,26 @@ const CreatePage: NextPage = () => {
     await router.replace(confirmResponse.redirect);
   };
 
+  const CURRENCY_ROW_H = 40;
+  const renderCurrencyRow: ListRowRenderer = ({ key, style, index }) => {
+    const currency = currenciesWithoutPrice[index];
+
+    return (
+      <div key={key} style={style}>
+        <div
+          className={`flex w-full rounded px-4 ${
+            selectingCurrency === currency
+              ? "bg-blue-500 text-white dark:bg-blue-500"
+              : "bg-neutral-200 dark:bg-neutral-700"
+          }`}
+          style={{ height: CURRENCY_ROW_H - 8 }}
+        >
+          <p className="my-auto">{currency?.toUpperCase()}</p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <LayoutWithNav>
       <LayoutCentered>
@@ -158,6 +240,49 @@ const CreatePage: NextPage = () => {
               placeholder="Some great description..."
               disabled={isSubmitting}
             />
+
+            <div>
+              <TextField
+                name="Price per game"
+                value={formatBigintMoney(price[0]?.unitAmount ?? 0)}
+                onChange={(v) => handlePriceChange(0, v)}
+                placeholder="Some great description..."
+                disabled={isSubmitting}
+                posfix={price[0]?.currency.toUpperCase()}
+              />
+              {currenciesWithoutPrice.length > 0 && (
+                <div className="flex flex-row-reverse">
+                  <button
+                    onClick={handlePriceAddIntent}
+                    className="rounded-b bg-green-400 px-2 py-px text-xs text-green-700 hover:bg-green-300"
+                  >
+                    + Currency
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {price.length > 1 && (
+              <div>
+                <p>For other currencies</p>
+                {price.slice(1, price.length).map(($, i) => (
+                  <div key={i} className="flex items-center">
+                    <TextField
+                      value={formatBigintMoney($.unitAmount)}
+                      onChange={(v) => handlePriceChange(i + 1, v)}
+                      disabled={isSubmitting}
+                      posfix={$.currency.toUpperCase()}
+                    />
+                    <button
+                      onClick={() => handlePriceRemove(i + 1)}
+                      className="px-2 hover:opacity-60"
+                    >
+                      <Close size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2 rounded-lg border border-inherit p-4 shadow-sm">
@@ -245,6 +370,30 @@ const CreatePage: NextPage = () => {
             </SubmitField>
           </div>
         </div>
+
+        {typeof selectingCurrency !== "undefined" && (
+          <Modal close={stopSelectingCurrency}>
+            <div className="flex flex-col gap-4">
+              <h2 className="tracking-wider opacity-50">Currencies</h2>
+              <List
+                rowHeight={CURRENCY_ROW_H}
+                rowCount={currenciesWithoutPrice.length}
+                rowRenderer={renderCurrencyRow}
+                overscanRowCount={2}
+                width={250}
+                height={200}
+              />
+              <div className="flex flex-row-reverse">
+                <button
+                  onClick={addPriceForSelectedCurrency}
+                  className="rounded-sm bg-blue-500 px-4 py-1 text-white hover:bg-blue-400"
+                >
+                  Select
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </LayoutCentered>
     </LayoutWithNav>
   );

@@ -2,7 +2,6 @@ import { z } from "zod";
 import { v4 as uuid } from "uuid";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { type CardModel } from "../../../utils/models";
 import { fakeDelay } from "../../../utils/fake";
 
 export const exploreRouter = createTRPCRouter({
