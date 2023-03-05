@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { dayjs } from "../../../utils/format";
+import { type CollectionWithProfits } from "../../../utils/models";
+import { Decimal } from "@prisma/client/runtime";
 
 export const meRouter = createTRPCRouter({
   creditPurchases: protectedProcedure
@@ -28,7 +30,7 @@ export const meRouter = createTRPCRouter({
       };
     }),
 
-  deck: protectedProcedure
+  userDeck: protectedProcedure
     .input(
       z.object({
         cardsPerLine: z.number().positive(),
@@ -38,40 +40,55 @@ export const meRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const cursorStep = Math.min(20, input.cardsPerLine * 4);
       const userId = ctx.session.user.id;
-      const deck = await ctx.prisma.consumerCard.findMany({
-        select: {
-          card: {
-            select: {
-              id: true,
-              name: true,
-              collectionId: true,
+      const deck = (
+        await ctx.prisma.consumerCard.findMany({
+          select: {
+            card: {
+              select: {
+                id: true,
+                generation: true,
+                collection: {
+                  select: {
+                    id: true,
+                    name: true,
+                    producer: {
+                      select: {
+                        user: {
+                          select: {
+                            name: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
-        },
-        where: {
-          consumerId: userId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        skip: input.cursor ?? 0,
-        take: cursorStep,
-      });
-      const deckWithAllowedUrl = await Promise.all(
-        deck.map(async (item) => ({
-          ...item.card,
-          // TODO: create a function that generate this, so we
-          // don't have any inconsistency on how this is created
-          url: await ctx.storage.urlForFetchingCard({
-            userId,
-            collectionId: item.card.collectionId,
-            cardId: item.card.id,
-          }),
-        }))
-      );
+          where: {
+            consumerId: userId,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          skip: input.cursor ?? 0,
+          take: cursorStep,
+        })
+      ).map(async ($) => ({
+        url: await ctx.storage.urlForFetchingCard({
+          userId,
+          collectionId: $.card.collection.id,
+          cardId: $.card.id,
+        }),
+        id: $.card.id,
+        generation: $.card.generation,
+        collectionId: $.card.collection.id,
+        collectionName: $.card.collection.name,
+        producerName: $.card.collection.producer.user.name,
+      }));
 
       return {
-        cards: deckWithAllowedUrl,
+        cards: await Promise.all(deck),
         cursorStep: cursorStep,
         nextCursor: (input.cursor ?? 0) + cursorStep,
       };
@@ -86,7 +103,7 @@ export const meRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const cursorStep = 10;
       const userId = ctx.session.user.id;
-      const totalProfitLastFiveMonths =
+      const totalProfitLastFiveMonths = (
         await ctx.prisma.collectionProfit.groupBy({
           by: ["period"],
           _sum: {
@@ -99,24 +116,67 @@ export const meRouter = createTRPCRouter({
             },
           },
           orderBy: {
+            period: "desc",
+          },
+        })
+      ).map(($) => ({ period: $.period, profit: $._sum.profit }));
+      const collectionProfit = (
+        await ctx.prisma.collectionProfit.groupBy({
+          by: ["period", "collectionId"],
+          _sum: {
+            profit: true,
+          },
+          where: {
+            producerId: userId,
+            period: {
+              gte: dayjs().startOf("month").subtract(5, "month").toDate(),
+            },
+          },
+          orderBy: {
             period: "asc",
           },
-        });
-      const contentByCursor = await ctx.prisma.collection.findMany({
-        where: {
-          producerId: userId,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-        // TODO: not very efficient :(
-        skip: input.cursor ?? 0,
-        take: cursorStep,
-      });
+          // TODO: not very efficient :(
+          skip: input.cursor ?? 0,
+          take: cursorStep,
+        })
+      ).map(($) => ({
+        id: $.collectionId,
+        period: $.period,
+        profit: $._sum.profit,
+      }));
+      const collections = (
+        await ctx.prisma.collection.findMany({
+          where: {
+            id: {
+              in: collectionProfit.map(($) => $.id),
+            },
+          },
+          select: {
+            id: true,
+            name: true,
+            cards: {
+              select: {
+                id: true,
+              },
+              take: 1,
+            },
+          },
+        })
+      ).map<CollectionWithProfits>(($) => ({
+        id: $.id,
+        profit: collectionProfit
+          .filter((c) => c.id === $.id)
+          .map((c) => ({
+            period: c.period,
+            profit: c.profit ?? new Decimal(0),
+          })),
+        name: $.name,
+        cardId: $.cards[0]?.id ?? "",
+      }));
 
       return {
         totalProfitLastFiveMonths,
-        contentByCursor,
+        collections,
         cursorStep,
         nextCursor: (input.cursor ?? 0) + cursorStep,
       };

@@ -1,20 +1,8 @@
-export interface CardModel {
-  reference: string;
-  id: string;
-  generation: number;
+import { type Card } from "@prisma/client";
+import { type Decimal } from "@prisma/client/runtime";
 
-  link: string;
-  slug: string;
-  collection: {
-    slug: string;
-    size: number;
-    playcost: number;
-    link: string;
-    creator: {
-      username: string;
-      link: string;
-    };
-  };
+export interface CardWithUrl extends Card {
+  url: string;
 }
 
 export interface CollectionModel {
@@ -45,7 +33,13 @@ export type UserModel = {
 );
 
 export interface MonthlyProfit {
-  year: number;
-  month: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
-  profit: number;
+  period: Date;
+  profit: Decimal;
+}
+
+export interface CollectionWithProfits {
+  id: string;
+  name: string;
+  cardId: string;
+  profit: MonthlyProfit[];
 }

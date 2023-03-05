@@ -50,7 +50,7 @@ model CollectionProfit {
 model Card {
     id String @id
 
-    name         String
+    generation   Int
     collectionId String
     embeddedAt   DateTime?
 
@@ -58,7 +58,7 @@ model Card {
     consumers  ConsumerCard[]
     gameplays  Gameplay[]
 
-    @@unique([name, collectionId])
+    @@unique([generation, collectionId])
 }
 
 // TODO: add payment information
@@ -98,6 +98,8 @@ model CreditPurchase {
     createdAt DateTime @default(now())
 
     consumerId     String
+    unitAmount     BigInt
+    currency       String
     transactionRef String
 
     consumer Consumer? @relation(fields: [consumerId], references: [id], onDelete: NoAction)

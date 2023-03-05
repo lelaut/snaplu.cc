@@ -10,7 +10,7 @@ import {
   type ListRowRenderer,
 } from "react-virtualized";
 
-import { type MonthlyProfit, type CardModel } from "../utils/models";
+import { type CollectionWithProfits } from "../utils/models";
 import { currency } from "../utils/format";
 import { ArtistLink } from "./Link";
 import { Spin } from "./Icons";
@@ -23,27 +23,34 @@ export const cardsPerLine = (width: number) =>
   Math.max(Math.floor(width / MIN_CARD_WIDTH), 1);
 
 interface CardProps {
-  card?: CardModel;
+  cardId: string;
+  cardUrl: string;
+  cardGeneration: number;
+  collectionId: string;
+  collectionName: string;
+  creatorId: string;
+  producerName: string;
+  collectionSize?: number;
+  collectionPlaycost?: number;
   style: CSSProperties;
   isCurrentReference?: boolean;
-  onClick: (card: CardModel) => Promise<void> | void;
+  onClick: (card: string) => Promise<void> | void;
 }
 
 export const CollectionCard = ({
-  card,
+  cardId,
+  cardUrl,
+  cardGeneration,
+  creatorId,
+  producerName,
+  collectionId,
+  collectionName,
+  collectionSize,
+  collectionPlaycost,
   style,
   isCurrentReference,
   onClick,
 }: CardProps) => {
-  // TODO: implement this
-  if (!card) {
-    return (
-      <div className="bg-red-500" style={style}>
-        <p>Nothing...</p>
-      </div>
-    );
-  }
-
   // TODO: add i18n
   // TODO: finish this
   return (
@@ -54,46 +61,55 @@ export const CollectionCard = ({
       style={style}
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       onClick={async () => {
-        await Promise.resolve(onClick(card));
+        await Promise.resolve(onClick(cardId));
       }}
     >
       <div className="flex items-center justify-between text-xs">
-        {[
-          {
-            content: `${card.collection.size} cards`,
-            color: "indigo",
-            colorIntensity: 600,
-          },
-          {
-            content: currency.format(card.collection.playcost),
-            color: "green",
-            colorIntensity: 400,
-          },
-        ].map((it, i) => (
-          <p
-            key={i}
-            className={`rounded-full bg-${it.color}-${
-              it.colorIntensity
-            } py-px px-2 text-${it.color}-700 shadow-lg shadow-${it.color}-${
-              it.colorIntensity + 100
-            }`}
-          >
-            {it.content}
-          </p>
-        ))}
+        {([] as { content: string; color: string; colorIntensity: number }[])
+          .concat(
+            typeof collectionSize !== "undefined"
+              ? [
+                  {
+                    content: `${collectionSize} cards`,
+                    color: "indigo",
+                    colorIntensity: 600,
+                  },
+                ]
+              : []
+          )
+          .concat(
+            typeof collectionPlaycost !== "undefined"
+              ? [
+                  {
+                    content: currency.format(collectionPlaycost),
+                    color: "green",
+                    colorIntensity: 400,
+                  },
+                ]
+              : []
+          )
+          .map((it, i) => (
+            <p
+              key={i}
+              className={`rounded-full bg-${it.color}-${
+                it.colorIntensity
+              } py-px px-2 text-${it.color}-700 shadow-lg shadow-${it.color}-${
+                it.colorIntensity + 100
+              }`}
+            >
+              {it.content}
+            </p>
+          ))}
       </div>
       <div className="">
-        <Link className="group" href={card.collection.link}>
+        <Link className="group" href={`/${creatorId}/${collectionId}`}>
           <h3 className="transform truncate text-lg font-bold opacity-80 transition group-hover:translate-x-2 group-hover:-translate-y-1 group-hover:scale-105 group-hover:opacity-100">
-            {card.collection.slug}
+            {`[${cardGeneration}] ${collectionName}`}
           </h3>
         </Link>
         <p className="text-xs">
           <span className="opacity-60">Collection by </span>
-          <ArtistLink
-            name={card.collection.creator.username}
-            link={card.collection.creator.link}
-          />
+          <ArtistLink name={producerName} link={`/${producerName}`} />
         </p>
       </div>
     </div>
@@ -122,11 +138,20 @@ export const CollectionBlockedCard = ({ amount }: { amount: number }) =>
     <></>
   );
 
+export interface CardGridItem {
+  id: string;
+  generation: number;
+  url: string;
+  collectionId: string;
+  collectionName: string;
+  producerName: string;
+}
+
 interface CardsGridProps {
-  cards: CardModel[];
+  cards: CardGridItem[];
 
   width: number;
-  onClick: (props: CardModel) => Promise<void> | void;
+  onClick: (cardId: string) => Promise<void> | void;
 
   isFetchingNextPage: boolean;
   fetchNextPage: () => Promise<void>;
@@ -171,11 +196,21 @@ export const CardsGrid = ({
     const idx = columnIndex + _cardsPerLine * rowIndex;
     const card = cards[idx];
 
+    if (typeof card === "undefined") {
+      return <div key={key} style={style} />;
+    }
+
     return (
       <CollectionCard
         key={key}
         style={style}
-        card={card}
+        cardId={card.id}
+        cardUrl={card.url}
+        cardGeneration={card.generation}
+        creatorId={card.id}
+        producerName={card.producerName}
+        collectionId={card.collectionId}
+        collectionName={card.collectionName}
         isCurrentReference={card?.id === reference}
         onClick={onClick}
       />
@@ -252,12 +287,7 @@ export const CardsGrid = ({
 };
 
 interface CreatorCollectionListProps {
-  collections: {
-    name: string;
-    image: string;
-    months: MonthlyProfit[];
-    link: string;
-  }[];
+  collections: CollectionWithProfits[];
   isFetchingNextPage: boolean;
   loadMoreItems: () => Promise<void>;
   scrollProvider: any;
@@ -291,7 +321,7 @@ export const CreatorCollectionList = ({
         <MonthlyProfitChart
           // TODO: make a link to the collection
           title={collection.name}
-          data={collection.months}
+          data={collection.profit}
           width={width}
         />
       </div>

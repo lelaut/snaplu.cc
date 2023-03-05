@@ -6,7 +6,6 @@ import { api } from "../utils/api";
 import { LayoutWithNav } from "../components/Layout";
 import { useWindowDimensions } from "../utils/hooks";
 import { cardsPerLine, CardsGrid } from "../components/Collection";
-import { type CardModel } from "../utils/models";
 
 const HomePage: NextPage = () => {
   const [reference, setReference] = useState<string | undefined>();
@@ -27,10 +26,7 @@ const HomePage: NextPage = () => {
     }
   );
 
-  const cards =
-    explore.data?.pages.flatMap((it) => {
-      return it.cards;
-    }) ?? [];
+  const cards = explore.data?.pages.flatMap((it) => it.cards) ?? [];
 
   // TODO: change URL to use the hash
   const handleCardClick = async ({ id }: CardModel) => {

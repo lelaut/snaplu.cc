@@ -89,7 +89,7 @@ describe("test me router", () => {
 
     // Act
     const router = createTestRouter(USER);
-    const { cards } = await router.me.deck({
+    const { cards } = await router.me.userDeck({
       cursor: null,
       cardsPerLine: 2,
     });

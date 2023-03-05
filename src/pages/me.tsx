@@ -1,19 +1,24 @@
 import { type NextPage } from "next";
 import Link from "next/link";
 import { useRef, useState, type RefObject } from "react";
+import { signOut } from "next-auth/react";
+import { type CreditPurchase } from "@prisma/client";
 
 import { api } from "../utils/api";
 import {
+  type CardGridItem,
   CardsGrid,
   cardsPerLine,
-  CreatorCollectionList,
+  type CreatorCollectionList,
 } from "../components/Collection";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
 import { Spin } from "../components/Icons";
-import { currency, dayjs } from "../utils/format";
-import { type MonthlyProfit, type CardModel } from "../utils/models";
+import { dayjs, formatBigintMoney } from "../utils/format";
+import {
+  type CollectionWithProfits,
+  type MonthlyProfit,
+} from "../utils/models";
 import { MonthlyProfitChart } from "../components/Chart";
-import { signOut } from "next-auth/react";
 
 const tabs = [
   { label: "Credit", render: CreditTab },
@@ -27,8 +32,9 @@ const MePage: NextPage = () => {
 
   const [tab, setTab] = useState<(typeof tabs)[number]>(tabs[0]);
 
-  const credit = api.me.credit.useQuery();
-  const deck = api.me.deck.useInfiniteQuery(
+  const purchases = api.me.creditPurchases.useQuery({});
+
+  const deckPages = api.me.userDeck.useInfiniteQuery(
     {
       cardsPerLine: cardsPerLine(tabRef.current?.clientWidth ?? 1),
     },
@@ -37,20 +43,20 @@ const MePage: NextPage = () => {
       refetchOnWindowFocus: false,
     }
   );
-  const content = api.me.content.useInfiniteQuery(
+  const deck = deckPages.data?.pages.flatMap((it) => it.cards) ?? [];
+
+  const contentPages = api.me.content.useInfiniteQuery(
     {},
     {
       getNextPageParam: (it) => it.nextCursor,
       refetchOnWindowFocus: false,
     }
   );
-
-  const deckCards = deck.data?.pages.flatMap((it) => it.cards) ?? [];
-
-  const contentMonths = [];
-  // content.data?.pages[content.data?.pages.length - 1]?.months ?? [];
-  const contentCollections = [];
-  // content.data?.pages.flatMap((it) => it.collections) ?? [];
+  const totalProfitPerPeriod = (contentPages.data?.pages.flatMap(
+    (it) => it.totalProfitLastFiveMonths
+  ) ?? []) as MonthlyProfit[];
+  const contentCollections =
+    contentPages.data?.pages.flatMap((it) => it.collections) ?? [];
 
   // TODO: should add hash in url
   const handleTabClick = (idx: number) => {
@@ -74,6 +80,7 @@ const MePage: NextPage = () => {
           </div>
           <button
             className="px-4 text-red-500 hover:text-red-400"
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             onClick={() => signOut({ callbackUrl: "/" })}
           >
             Exit
@@ -86,17 +93,17 @@ const MePage: NextPage = () => {
         >
           {tab.label === "Credit" &&
             tab.render({
-              lastDeposits: credit.data?.lastDeposits ?? [],
-              lastUpdate: credit.dataUpdatedAt,
-              isUpdating: credit.isFetching,
+              purchases: purchases.data?.purchases ?? [],
+              lastUpdate: purchases.dataUpdatedAt,
+              isUpdating: purchases.isFetching,
             })}
           {tab.label === "Deck" &&
             tab.render({
-              cards: deckCards,
+              cards: deck as CardGridItem[],
               width: tabWidth,
               fetchNextPage:
-                deck.fetchNextPage as unknown as () => Promise<void>,
-              isFetchingNextPage: deck.isFetchingNextPage,
+                deckPages.fetchNextPage as unknown as () => Promise<void>,
+              isFetchingNextPage: deckPages.isFetchingNextPage,
               onClick: () => {
                 console.log("clicked");
               },
@@ -104,14 +111,14 @@ const MePage: NextPage = () => {
           {tab.label === "My Content" &&
             tab.render({
               ref: tabRef,
-              collectionsUpdatedAt: content.dataUpdatedAt,
-              areCollectionsUpdating: content.isRefetching,
-              months: contentMonths,
+              collectionsUpdatedAt: contentPages.dataUpdatedAt,
+              areCollectionsUpdating: contentPages.isRefetching,
+              totalProfitPerPeriod,
               collections: contentCollections,
               width: tabWidth,
-              isFetchingMoreCollections: content.isFetchingNextPage,
+              isFetchingMoreCollections: contentPages.isFetchingNextPage,
               fetchMoreCollections:
-                content.fetchNextPage as unknown as () => Promise<void>,
+                contentPages.fetchNextPage as unknown as () => Promise<void>,
             })}
         </div>
       </LayoutCentered>
@@ -147,12 +154,12 @@ const TabButton = ({
 };
 
 interface CreditTabProps {
-  lastDeposits: { amount: number; paymentMethod: string; createdAt: number }[];
+  purchases: CreditPurchase[];
   lastUpdate: number;
   isUpdating: boolean;
 }
 
-function CreditTab({ lastDeposits, lastUpdate, isUpdating }: CreditTabProps) {
+function CreditTab({ purchases, lastUpdate, isUpdating }: CreditTabProps) {
   return (
     <div className="border-inherit py-4">
       <div className="h-[200px] w-full border-b border-inherit" />
@@ -163,24 +170,24 @@ function CreditTab({ lastDeposits, lastUpdate, isUpdating }: CreditTabProps) {
           isUpdating={isUpdating}
           className="mb-4"
         />
-        {(lastDeposits.length > 0 && (
+        {(purchases.length > 0 && (
           <ul className="flex flex-col gap-4">
-            {lastDeposits.map((deposit, i) => (
+            {purchases.map((purchase, i) => (
               <li
                 key={i}
                 className="rounded bg-neutral-800/5 bg-neutral-50/5 p-4"
               >
                 <div className="flex items-center justify-between">
                   <p className="tracking-wide">
-                    {currency.format(deposit.amount)}
+                    {formatBigintMoney(purchase.unitAmount)}
                   </p>
                   <p className="rounded bg-green-500 px-2 py-px text-xs font-bold tracking-wider text-green-800">
-                    {deposit.paymentMethod}
+                    {purchase.currency.toUpperCase()}
                   </p>
                 </div>
                 <p className="text-xs opacity-30">
                   {dayjs
-                    .duration(+new Date() - deposit.createdAt)
+                    .duration(+new Date() - +purchase.createdAt)
                     .humanize(true)}
                 </p>
               </li>
@@ -193,11 +200,11 @@ function CreditTab({ lastDeposits, lastUpdate, isUpdating }: CreditTabProps) {
 }
 
 interface DeckTabProps {
-  cards: CardModel[];
+  cards: CardGridItem[];
   width: number;
   fetchNextPage: () => Promise<void>;
   isFetchingNextPage: boolean;
-  onClick: () => void;
+  onClick: (cardId: string) => void;
 }
 
 function DeckTab({
@@ -223,13 +230,8 @@ interface MyContentTabProps {
   ref: RefObject<HTMLDivElement>;
   collectionsUpdatedAt: number;
   areCollectionsUpdating: boolean;
-  months: MonthlyProfit[];
-  collections: {
-    name: string;
-    image: string;
-    months: MonthlyProfit[];
-    link: string;
-  }[];
+  totalProfitPerPeriod: MonthlyProfit[];
+  collections: CollectionWithProfits[];
   width: number;
   isFetchingMoreCollections: boolean;
   fetchMoreCollections: () => Promise<void>;
@@ -242,7 +244,7 @@ function MyContentTab({
   ref,
   collectionsUpdatedAt,
   areCollectionsUpdating,
-  months,
+  totalProfitPerPeriod,
   collections,
   width,
   isFetchingMoreCollections,
@@ -251,7 +253,11 @@ function MyContentTab({
   return (
     <div className="flex flex-col gap-4 border-inherit">
       <div className="pb-2">
-        <MonthlyProfitChart title="Revenue" data={months} width={width} />
+        <MonthlyProfitChart
+          title="Revenue"
+          data={totalProfitPerPeriod}
+          width={width}
+        />
       </div>
 
       <div className="flex flex-auto flex-col border-t border-inherit">
