@@ -1,3 +1,4 @@
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   type NextPage,
   type InferGetStaticPropsType,
@@ -14,6 +15,7 @@ import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
 import { PlayLink } from "../../components/Link";
 import { prisma } from "../../server/db";
 import { fakeCollections } from "../../utils/fake";
+import { bucketKey } from "../../utils/format";
 
 const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   user,
@@ -87,7 +89,7 @@ export const getStaticProps: GetStaticProps<{
     return { props: {} };
   }
 
-  const data = prisma.producer.findUnique({
+  const data = await prisma.producer.findUnique({
     where: {
       slug: params.username as string,
     },
@@ -98,20 +100,56 @@ export const getStaticProps: GetStaticProps<{
 
       collections: {
         select: {
+          id: true,
           name: true,
           description: true,
           gameplayPriceRef: true,
+
+          cards: {
+            where: {
+              rarity: null,
+            },
+            select: {
+              id: true,
+            },
+          },
+          _count: {
+            select: {
+              cards: {
+                where: {
+                  NOT: {
+                    rarity: null,
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
   });
-  const username = params?.username as string;
+
+  if (data === null) {
+    return { props: {} };
+  }
 
   return {
     props: {
       user: {
-        name: username,
-        description: `User ${username} description...`,
+        name: data.nickname,
+        description: data.description,
+
+        collections: data.collections.map((collection) => ({
+          id: collection.id,
+          name: collection.name,
+          description: collection.description,
+          // TODO: fetch price from stripe
+          freeCards: collection.cards.map((card) => ({
+            // TODO: must never expirer
+            url: getSignedUrl(bucketKey(data.id, collection.id, card.id), "GetObject"),
+          }))
+          
+        }))
 
         collections: fakeCollections(username),
       },
