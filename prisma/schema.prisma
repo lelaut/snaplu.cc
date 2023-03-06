@@ -47,11 +47,20 @@ model CollectionProfit {
     @@id([collectionId, period])
 }
 
+enum CardRarity {
+    COMMON
+    UNCOMMON
+    RARE
+    EXTINCT
+    IMPOSSIBLE
+}
+
 model Card {
     id String @id
 
     generation   Int
     collectionId String
+    rarity       CardRarity?
     embeddedAt   DateTime?
 
     collection Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)

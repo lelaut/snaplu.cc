@@ -5,6 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { supportedCurrencies } from "../../../utils/payment";
 import { prisma } from "../../db";
+import { rarity } from "../../../utils/rarity";
 
 // TODO: add a slug to the collection model, this should also have a URL preview when
 // creating a collection.
@@ -14,7 +15,13 @@ export const collectionRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         description: z.string(),
-        numberOfCards: z.number().gt(0),
+        cards: z
+          .object({
+            generation: z.number().gte(0),
+            rarity: z.string(),
+          })
+          .array()
+          .nonempty(),
         price: z.object({
           unitAmount: z.number().int(),
           currency: z.enum(supportedCurrencies),
@@ -38,7 +45,7 @@ export const collectionRouter = createTRPCRouter({
       const userId = ctx.session.user.id;
       const collectionId = nanoid();
       const cards = await Promise.all(
-        input.cardsName.map(async (name) => {
+        input.cards.map(async (card) => {
           const id = nanoid();
           const url = await ctx.storage.urlForUploadingCard({
             userId,
@@ -46,7 +53,7 @@ export const collectionRouter = createTRPCRouter({
             cardId: id,
           });
 
-          return { id, name, url };
+          return { ...card, id, url };
         })
       );
 
@@ -69,7 +76,11 @@ export const collectionRouter = createTRPCRouter({
             },
           },
           cards: {
-            create: cards.map((card) => ({ id: card.id, name: card.name })),
+            create: cards.map((card) => ({
+              id: card.id,
+              generation: card.generation,
+              rarity: card.rarity.toUpperCase(),
+            })),
           },
         },
       });
@@ -79,7 +90,7 @@ export const collectionRouter = createTRPCRouter({
         cardsNameToUploadLink: cards.reduce<Record<string, string>>(
           (acc, it) => ({
             ...acc,
-            [it.name]: it.url,
+            [it.generation]: it.url,
           }),
           {}
         ),

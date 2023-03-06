@@ -1,6 +1,6 @@
 import { type NextPage } from "next";
 import { useRouter } from "next/router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { List, type ListRowRenderer } from "react-virtualized";
 
 import { CARD_ASPECT } from "../components/Collection";
@@ -14,14 +14,20 @@ import {
 } from "../utils/payment";
 import { api } from "../utils/api";
 import { formatBigintMoney } from "../utils/format";
+import { useOutsideEvent } from "../utils/hooks";
+import { rarity } from "../utils/rarity";
+import { type NonEmpty } from "../utils/types";
 
 const MINI_CARD_WIDTH = 175;
 
+// TODO: deal with image preview error
 const CreatePage: NextPage = () => {
   const router = useRouter();
 
   const createCollection = api.collection.create.useMutation();
   const confirmCollection = api.collection.confirm.useMutation();
+
+  const rarityMenuRef = useRef(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -29,6 +35,10 @@ const CreatePage: NextPage = () => {
     { currency: SupportedCurrencies; unitAmount: number }[]
   >([{ currency: "usd", unitAmount: 0 }]);
   const [files, setFiles] = useState<Uploadable[]>([]);
+  const [cardRarity, setCardRarity] = useState<(number | undefined)[]>([]);
+  const [rarityMenuOnCard, setRarityMenuOnCard] = useState<
+    number | undefined
+  >();
 
   const [nameError, setNameError] = useState<string | undefined>();
   const [descriptionError, setDescriptionError] = useState<
@@ -92,6 +102,22 @@ const CreatePage: NextPage = () => {
     setPrice(price.filter((_, i) => i !== priceIdx));
   };
 
+  const handleCardRarityClick = (cardIdx: number) => {
+    setRarityMenuOnCard(cardIdx);
+  };
+
+  const handleCardRarityChange = (
+    cardIdx: number,
+    rarity: number | undefined
+  ) => {
+    setCardRarity(cardRarity.map((v, i) => (i === cardIdx ? rarity : v)));
+    closeRarityMenu();
+  };
+
+  const closeRarityMenu = () => {
+    setRarityMenuOnCard(undefined);
+  };
+
   const handleFilesReceive = (received: FileList) => {
     for (const fileReceived of received) {
       if (!files.find((f) => f.file.name === fileReceived.name)) {
@@ -100,6 +126,7 @@ const CreatePage: NextPage = () => {
             { file: fileReceived, status: "evaluating", progress: 0 },
           ])
         );
+        setCardRarity(cardRarity.concat(undefined));
 
         const reader = new FileReader();
 
@@ -127,8 +154,9 @@ const CreatePage: NextPage = () => {
     }
   };
 
-  const handleDelete = (idx: number) => {
+  const handleCardDelete = (idx: number) => {
     setFiles(files.filter((_, i) => i !== idx));
+    setCardRarity(cardRarity.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async () => {
@@ -140,7 +168,10 @@ const CreatePage: NextPage = () => {
     const createResponse = await createCollection.mutateAsync({
       name,
       description,
-      numberOfCards: files.length,
+      cards: cardRarity.map((rarity, generation) => ({
+        generation,
+        rarity,
+      })) as unknown as NonEmpty<{ generation: number; rarity: string }>,
       price: {
         currency: price[0]?.currency ?? "usd",
         unitAmount: price[0]?.unitAmount ?? 10,
@@ -187,6 +218,8 @@ const CreatePage: NextPage = () => {
 
     await router.replace(confirmResponse.redirect);
   };
+
+  useOutsideEvent(rarityMenuRef, closeRarityMenu);
 
   const CURRENCY_ROW_H = 40;
   const renderCurrencyRow: ListRowRenderer = ({ key, style, index }) => {
@@ -315,30 +348,77 @@ const CreatePage: NextPage = () => {
               <div>
                 <ul className="flex flex-wrap justify-center gap-2">
                   {files.map((it, i) => (
-                    <li
-                      key={i}
-                      className="flex flex-col justify-between gap-2 rounded bg-neutral-200 text-xs shadow-lg dark:bg-neutral-700"
-                      style={{
-                        width: MINI_CARD_WIDTH,
-                        height: MINI_CARD_WIDTH * CARD_ASPECT,
-                      }}
-                    >
+                    <li key={i} className="flex">
                       <div
-                        className="flex flex-1 justify-between rounded-t bg-white/20 bg-contain p-2"
+                        className="flex flex-col justify-between gap-2 rounded-b bg-neutral-300 text-xs shadow-lg dark:bg-neutral-900"
                         style={{
-                          backgroundImage: `url("${it.previewUrl ?? ""}")`,
+                          width: MINI_CARD_WIDTH,
+                          height: MINI_CARD_WIDTH * CARD_ASPECT,
                         }}
                       >
-                        <button
-                          className="h-min"
-                          onClick={() => handleDelete(i)}
+                        <div
+                          className="flex flex-1 flex-col justify-between rounded-t bg-white/20 bg-contain bg-center bg-no-repeat p-2"
+                          style={{
+                            backgroundImage: `url("${it.previewUrl ?? ""}")`,
+                          }}
                         >
-                          <Close size={12} />
-                        </button>
+                          <div className="flex h-min w-full items-center justify-between">
+                            <button
+                              className="h-min rounded-full bg-black/50 p-1 backdrop-blur-sm"
+                              onClick={() => handleCardDelete(i)}
+                            >
+                              <Close size={12} />
+                            </button>
 
-                        <StatusProgress value={it} />
+                            <div className="h-min rounded-full bg-black/50 p-1 backdrop-blur-sm">
+                              <StatusProgress value={it} />
+                            </div>
+                          </div>
+                          <div className="flex flex-row-reverse justify-between">
+                            <button
+                              onClick={() => handleCardRarityClick(i)}
+                              className="rounded-full bg-blue-500 px-2 py-px hover:opacity-80"
+                              style={{
+                                backgroundColor:
+                                  rarity[cardRarity[i] as number]?.background,
+                                color: rarity[cardRarity[i] as number]?.text,
+                              }}
+                            >
+                              {rarity[cardRarity[i] as number]?.name ?? "Free"}{" "}
+                              ⇾
+                            </button>
+                          </div>
+                        </div>
+                        <div className="px-2 pb-2">
+                          {/* TODO: display upload error here */}
+                        </div>
                       </div>
-                      <p className="truncate px-2 pb-2">{it.file.name}</p>
+                      {rarityMenuOnCard === i && (
+                        <ul
+                          ref={rarityMenuRef}
+                          className="mt-2 h-min bg-black text-xs"
+                        >
+                          <li
+                            className="cursor-pointer bg-blue-500 p-1 text-blue-700 hover:opacity-80"
+                            onClick={() => handleCardRarityChange(i, undefined)}
+                          >
+                            Free
+                          </li>
+                          {rarity.map(($, j) => (
+                            <li
+                              key={j}
+                              style={{
+                                backgroundColor: $.background,
+                                color: $.text,
+                              }}
+                              className="cursor-pointer p-1 hover:opacity-80"
+                              onClick={() => handleCardRarityChange(i, j)}
+                            >
+                              {$.name}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -453,7 +533,7 @@ const StatusProgress = ({ value }: StatusProgressProps) => {
     >
       {value.progress < 100 && <Spin size={10} />}
       <p>
-        {label}
+        {value.progress >= 100 && label}
         {value.progress < 100 && <span> {value.progress}%</span>}
       </p>
     </div>

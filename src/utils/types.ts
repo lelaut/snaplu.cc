@@ -10,3 +10,5 @@ export type PartialRecordWithAtLeastOne<
   K extends string | number | symbol,
   V
 > = RequireAtLeastOne<Partial<Record<K, V>>, K>;
+
+export type NonEmpty<T> = [T, ...T[]];
