@@ -16,11 +16,10 @@ import { prisma } from "../../server/db";
 import storage from "../../server/storage";
 import { collectionLink } from "../../utils/format";
 
+// TODO: fetch for cards that are unblocked for this particular user
 const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   user,
 }) => {
-  console.log({ user });
-
   // TODO: set 404.tsx page
   if (typeof user === "undefined") {
     return <p>error</p>;

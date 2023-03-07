@@ -4,18 +4,20 @@ import {
   type GetStaticPaths,
   type InferGetStaticPropsType,
 } from "next";
-import {
-  CollectionBlockedCard,
-  CollectionUnblockedCard,
-} from "../../components/Collection";
 
 import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
-import { ArtistLink, PlayLink } from "../../components/Link";
-import { fakeCollections } from "../../utils/fake";
+import { ArtistLink } from "../../components/Link";
+import { PlayAction } from "../../components/Action";
+import {
+  CollectionBlockedCard,
+  CollectionFreeCard,
+} from "../../components/Collection";
+import { prisma } from "../../server/db";
+import storage from "../../server/storage";
 
 const CollectionPage: NextPage<
   InferGetStaticPropsType<typeof getStaticProps>
-> = ({ collection }) => {
+> = ({ userslug, collection }) => {
   return (
     <LayoutWithNav>
       <LayoutWithFixedContext
@@ -24,20 +26,17 @@ const CollectionPage: NextPage<
         contextSubtitle={
           <p>
             <span className="opacity-50">by</span>{" "}
-            <ArtistLink
-              name={collection.creatorUsername}
-              link={collection.creatorLink}
-            />
+            <ArtistLink name={collection.creatorUsername} slug={userslug} />
           </p>
         }
         // TODO: add crazy animation when hovering
-        contextAction={<PlayLink link={collection.playLink} />}
+        contextAction={<PlayAction collectionId={collection.id} />}
       >
         <div className="flex flex-wrap justify-center gap-4 p-4">
-          {collection.cardsUnblocked.map((card) => (
-            <CollectionUnblockedCard key={card.id} color={card.color} />
+          {collection.freeCards.map((card) => (
+            <CollectionFreeCard key={card.url} url={card.url} />
           ))}
-          <CollectionBlockedCard amount={collection.cardsBlocked} />
+          <CollectionBlockedCard amount={collection.numberOfBlockedCards} />
         </div>
       </LayoutWithFixedContext>
     </LayoutWithNav>
@@ -47,26 +46,73 @@ const CollectionPage: NextPage<
 export default CollectionPage;
 
 export const getStaticProps: GetStaticProps<{
+  userslug: string;
   collection: {
+    id: string;
     name: string;
     description: string;
-    playcost: number;
-    playLink: string;
     creatorUsername: string;
-    creatorLink: string;
 
-    cardsUnblocked: {
-      id: string;
-      color: string;
-      imageSrc: boolean;
+    freeCards: {
+      url: string;
     }[];
-    cardsBlocked: number;
+    numberOfBlockedCards: number;
   };
-}> = ({ params }) => {
+}> = async ({ params }) => {
+  if (typeof params?.collection === "undefined") {
+    return { notFound: true };
+  }
+
+  const collection = await prisma.collection.findUnique({
+    where: {
+      id: params.collection as string,
+    },
+    select: {
+      id: true,
+      producerId: true,
+      name: true,
+      description: true,
+      gameplayPriceRef: true,
+
+      cards: {
+        where: {
+          rarity: null,
+        },
+        select: {
+          id: true,
+        },
+      },
+      _count: {
+        select: {
+          cards: true,
+        },
+      },
+    },
+  });
+
+  if (collection === null) {
+    return { notFound: true };
+  }
+
   return {
     props: {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      collection: fakeCollections(params?.username as string)[0]!,
+      collection: {
+        id: collection.id,
+        name: collection.name,
+        description: collection.description,
+        // TODO: fetch price from stripe
+        freeCards: await Promise.all(
+          collection.cards.map(async (card) => ({
+            url: await storage.urlForFetchingCard({
+              userId: collection.producerId,
+              collectionId: collection.id,
+              cardId: card.id,
+              forever: true,
+            }),
+          }))
+        ),
+        numberOfBlockedCards: collection._count.cards - collection.cards.length,
+      },
     },
 
     // Next.js will attempt to re-generate the page:
@@ -76,9 +122,22 @@ export const getStaticProps: GetStaticProps<{
   };
 };
 
-export const getStaticPaths: GetStaticPaths = () => {
+export const getStaticPaths: GetStaticPaths = async () => {
+  const collections = await prisma.collection.findMany({
+    select: {
+      id: true,
+      producer: {
+        select: {
+          slug: true,
+        },
+      },
+    },
+  });
+
   return {
-    paths: [{ params: { username: "creator_0", collection: "collection_0" } }],
+    paths: collections.map(($) => ({
+      params: { userslug: $.producer.slug, collection: $.id },
+    })),
     fallback: "blocking",
   };
 };

@@ -36,3 +36,9 @@ export const collectionLink = ({
   userslug,
   collectionId,
 }: CollectionLinkProps): string => `/${userslug}/${collectionId}`;
+
+interface ProducerLinkProps {
+  userslug: string;
+}
+
+export const producerLink = ({ userslug }: ProducerLinkProps) => `/${userslug}`;
