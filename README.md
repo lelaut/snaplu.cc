@@ -25,6 +25,14 @@ cog build -t embedding
 docker compose up -d
 ```
 
+3. Create the s3 bucket inside the localstack container
+
+```console
+docker exec -it localstack_main \
+  /bin/bash -c \
+  'awslocal s3api create-bucket --bucket ${AWS_S3_BUCKET} --region ${AWS_DEFAULT_REGION}'
+```
+
 **🚀 After this you should be set to go 🚀**
 
 ## Roadmap
@@ -36,7 +44,9 @@ docker compose up -d
 - [ ] Integrate new backend into frontend
 - [ ] Add missing features
   - Each card should have a rarity factor
-- [ ] Use Terraform to automate infrastructure deployment(https://vercel.com/guides/integrating-terraform-with-vercel)
+  - Following system
+- [ ] Use Terraform to automate infrastructure deployment, still need to choose what provider I'll use
+  - https://vercel.com/guides/integrating-terraform-with-vercel
 - [ ] Enhance frontend design, check your colors man
 - [ ] Integrate Sentry
 

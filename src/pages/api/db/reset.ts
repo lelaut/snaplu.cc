@@ -1,4 +1,5 @@
 import { NextApiHandler } from "next";
+
 import { CARD_ASPECT, MIN_CARD_WIDTH } from "../../../components/Collection";
 import { prisma } from "../../../server/db";
 import storage from "../../../server/storage";
@@ -36,10 +37,11 @@ const handler: NextApiHandler = async (req, res) => {
           height: MIN_CARD_WIDTH * CARD_ASPECT,
         })
       );
+      const blob = await image.blob();
 
       await fetch(uploadUrl, {
         method: "PUT",
-        body: await image.blob(),
+        body: blob,
       });
     })
   );

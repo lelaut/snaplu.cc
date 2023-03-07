@@ -238,7 +238,7 @@ interface RandomImageProps {
 export function randomImage({ id, width, height }: RandomImageProps) {
   // https://picsum.photos/images#34
   const TOTAL_IMAGES = 1084;
-  const img = hashcode(id);
+  const img = hashcode(id) % TOTAL_IMAGES;
 
   return `https://picsum.photos/id/${img}/${Math.floor(width)}/${Math.floor(
     height
