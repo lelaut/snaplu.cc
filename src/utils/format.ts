@@ -26,3 +26,13 @@ export const bucketKey = (
   collectionId: string,
   cardId?: string
 ): string => `card/${userId}/${collectionId}/${cardId ?? ""}`;
+
+interface CollectionLinkProps {
+  userslug: string;
+  collectionId: string;
+}
+
+export const collectionLink = ({
+  userslug,
+  collectionId,
+}: CollectionLinkProps): string => `/${userslug}/${collectionId}`;
