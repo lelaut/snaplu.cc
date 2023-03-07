@@ -79,7 +79,7 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
 export default UserPage;
 
 export const getStaticProps: GetStaticProps<{
-  user: {
+  user?: {
     slug: string;
     name: string;
     description: string;
@@ -97,7 +97,7 @@ export const getStaticProps: GetStaticProps<{
   };
 }> = async ({ params }) => {
   if (typeof params === "undefined") {
-    return { props: {} };
+    return { notFound: true };
   }
 
   const data = await prisma.producer.findUnique({
@@ -135,7 +135,7 @@ export const getStaticProps: GetStaticProps<{
   });
 
   if (data === null) {
-    return { props: {} };
+    return { notFound: true };
   }
 
   return {
