@@ -13,7 +13,7 @@ import {
 import { type CollectionWithProfits } from "../utils/models";
 import { currency } from "../utils/format";
 import { ArtistLink } from "./Link";
-import { Spin } from "./Icons";
+import { Spin } from "./Icon";
 import { MonthlyProfitChart } from "./Chart";
 
 export const MIN_CARD_WIDTH = 250;
@@ -116,27 +116,41 @@ export const CollectionCard = ({
   );
 };
 
-export const CollectionUnblockedCard = ({ color }: { color: string }) => (
+interface CollectionFreeCardProps {
+  url: string;
+}
+
+export const CollectionFreeCard = ({ url }: CollectionFreeCardProps) => (
   <div
-    className="h-[300px] min-w-[200px] rounded shadow"
-    style={{ backgroundColor: color }}
+    className="rounded bg-white/20 bg-contain bg-center bg-no-repeat p-2"
+    style={{
+      backgroundImage: `url("${url}")`,
+      minWidth: MIN_CARD_WIDTH,
+      height: MIN_CARD_WIDTH * CARD_ASPECT,
+    }}
   />
 );
 
-export const CollectionBlockedCard = ({ amount }: { amount: number }) =>
-  amount > 0 ? (
-    <div className="flex h-[300px] min-w-[200px] flex-col items-center justify-center gap-1 rounded bg-neutral-100 shadow ring-2 dark:bg-neutral-700">
-      <p className="text-2xl font-bold">+{amount}</p>
-      <p className="text-xs">
-        <span className="rounded-full bg-green-400 px-2 py-px font-bold text-green-600">
-          Play
-        </span>{" "}
-        <span className="opacity-50">to unlock more cards</span>
-      </p>
-    </div>
-  ) : (
-    <></>
-  );
+export const CollectionBlockedCard = ({ amount }: { amount: number }) => (
+  <div
+    className="flex flex-col items-center justify-center gap-1 rounded bg-neutral-100 shadow ring-2 dark:bg-neutral-700"
+    style={{ minWidth: MIN_CARD_WIDTH, height: MIN_CARD_WIDTH * CARD_ASPECT }}
+  >
+    {amount > 0 ? (
+      <>
+        <p className="text-2xl font-bold">+{amount}</p>
+        <p className="text-xs">
+          <span className="rounded-full bg-green-400 px-2 py-px font-bold text-green-600">
+            Play
+          </span>{" "}
+          <span className="opacity-50">to unlock more cards</span>
+        </p>
+      </>
+    ) : (
+      <p className="text-lg font-bold">You have unlock all cards</p>
+    )}
+  </div>
+);
 
 export interface CardGridItem {
   id: string;

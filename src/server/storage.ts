@@ -19,6 +19,7 @@ interface FetchCardParams {
   userId: string;
   collectionId: string;
   cardId: string;
+  forever?: true;
 }
 
 interface GetCollectionCardsParams {
@@ -71,14 +72,25 @@ class StorageSystem {
     return url;
   }
 
-  async urlForFetchingCard({ userId, collectionId, cardId }: FetchCardParams) {
+  async urlForFetchingCard({
+    userId,
+    collectionId,
+    cardId,
+    forever,
+  }: FetchCardParams) {
     const command = new GetObjectCommand({
       Bucket: env.AWS_S3_BUCKET,
       Key: bucketKey(userId, collectionId, cardId),
     });
-    const url = await getSignedUrl(this.s3, command, {
-      expiresIn: +env.AWS_S3_GET_EXP,
-    });
+    const url = await getSignedUrl(
+      this.s3,
+      command,
+      forever
+        ? undefined
+        : {
+            expiresIn: +env.AWS_S3_GET_EXP,
+          }
+    );
 
     return url;
   }

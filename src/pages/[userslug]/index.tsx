@@ -1,4 +1,3 @@
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   type NextPage,
   type InferGetStaticPropsType,
@@ -9,17 +8,24 @@ import Link from "next/link";
 
 import {
   CollectionBlockedCard,
-  CollectionUnblockedCard,
+  CollectionFreeCard,
 } from "../../components/Collection";
 import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
-import { PlayLink } from "../../components/Link";
+import { PlayAction } from "../../components/Action";
 import { prisma } from "../../server/db";
-import { fakeCollections } from "../../utils/fake";
-import { bucketKey } from "../../utils/format";
+import storage from "../../server/storage";
+import { collectionLink } from "../../utils/format";
 
 const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   user,
 }) => {
+  console.log({ user });
+
+  // TODO: set 404.tsx page
+  if (typeof user === "undefined") {
+    return <p>error</p>;
+  }
+
   return (
     <LayoutWithNav>
       <LayoutWithFixedContext
@@ -33,7 +39,10 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
               <div className="flex items-center justify-between p-4">
                 <div className="min-w-0">
                   <Link
-                    href={collection.link}
+                    href={collectionLink({
+                      userslug: user.slug,
+                      collectionId: collection.id,
+                    })}
                     className="truncate text-lg font-bold tracking-wider transition hover:opacity-50"
                   >
                     {collection.name}
@@ -42,14 +51,21 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
                     {collection.description}
                   </p>
                 </div>
-                <PlayLink link={collection.playLink} />
+                <PlayAction collectionId={collection.id} />
               </div>
-              <Link href={collection.link}>
+              <Link
+                href={collectionLink({
+                  userslug: user.slug,
+                  collectionId: collection.id,
+                })}
+              >
                 <div className="flex gap-4 overflow-x-auto p-4">
-                  {collection.cardsUnblocked.map((card) => (
-                    <CollectionUnblockedCard key={card.id} color={card.color} />
+                  {collection.freeCards.map((card) => (
+                    <CollectionFreeCard key={card.url} url={card.url} />
                   ))}
-                  <CollectionBlockedCard amount={collection.cardsBlocked} />
+                  <CollectionBlockedCard
+                    amount={collection.numberOfBlockedCards}
+                  />
                 </div>
               </Link>
             </div>
@@ -64,34 +80,29 @@ export default UserPage;
 
 export const getStaticProps: GetStaticProps<{
   user: {
+    slug: string;
     name: string;
     description: string;
 
     collections: {
+      id: string;
       name: string;
       description: string;
-      link: string;
-      playcost: number;
-      playLink: string;
-      creatorUsername: string;
-      creatorLink: string;
 
-      cardsUnblocked: {
-        id: string;
-        color: string;
-        imageSrc: boolean;
+      freeCards: {
+        url: string;
       }[];
-      cardsBlocked: number;
+      numberOfBlockedCards: number;
     }[];
   };
-}> = ({ params }) => {
+}> = async ({ params }) => {
   if (typeof params === "undefined") {
     return { props: {} };
   }
 
   const data = await prisma.producer.findUnique({
     where: {
-      slug: params.username as string,
+      slug: params.userslug as string,
     },
     select: {
       id: true,
@@ -115,13 +126,7 @@ export const getStaticProps: GetStaticProps<{
           },
           _count: {
             select: {
-              cards: {
-                where: {
-                  NOT: {
-                    rarity: null,
-                  },
-                },
-              },
+              cards: true,
             },
           },
         },
@@ -136,22 +141,30 @@ export const getStaticProps: GetStaticProps<{
   return {
     props: {
       user: {
+        slug: params.userslug as string,
         name: data.nickname,
         description: data.description,
 
-        collections: data.collections.map((collection) => ({
-          id: collection.id,
-          name: collection.name,
-          description: collection.description,
-          // TODO: fetch price from stripe
-          freeCards: collection.cards.map((card) => ({
-            // TODO: must never expirer
-            url: getSignedUrl(bucketKey(data.id, collection.id, card.id), "GetObject"),
+        collections: await Promise.all(
+          data.collections.map(async (collection) => ({
+            id: collection.id,
+            name: collection.name,
+            description: collection.description,
+            // TODO: fetch price from stripe
+            freeCards: await Promise.all(
+              collection.cards.map(async (card) => ({
+                url: await storage.urlForFetchingCard({
+                  userId: data.id,
+                  collectionId: collection.id,
+                  cardId: card.id,
+                  forever: true,
+                }),
+              }))
+            ),
+            numberOfBlockedCards:
+              collection._count.cards - collection.cards.length,
           }))
-          
-        }))
-
-        collections: fakeCollections(username),
+        ),
       },
     },
     // Next.js will attempt to re-generate the page:
@@ -169,7 +182,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   });
 
   return {
-    paths: users.map(($) => ({ params: { username: $.slug } })),
+    paths: users.map(($) => ({ params: { userslug: $.slug } })),
     fallback: "blocking",
   };
 };

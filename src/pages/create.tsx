@@ -5,7 +5,7 @@ import { List, type ListRowRenderer } from "react-virtualized";
 
 import { CARD_ASPECT } from "../components/Collection";
 import { SubmitField, TextField, UploadField } from "../components/Field";
-import { Close, Empty, Spin } from "../components/Icons";
+import { Close, Empty, Spin } from "../components/Icon";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
 import Modal from "../components/Modal";
 import {
@@ -195,6 +195,7 @@ const CreatePage: NextPage = () => {
 
       promises.push(
         (async () => {
+          // TODO: need to upload both small and high res
           const uploadResponse = await fetch(uploadLink, {
             method: "PUT",
             body: file.file,

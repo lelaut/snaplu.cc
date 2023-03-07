@@ -12,7 +12,7 @@ import {
   type CreatorCollectionList,
 } from "../components/Collection";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
-import { Spin } from "../components/Icons";
+import { Spin } from "../components/Icon";
 import { dayjs, formatBigintMoney } from "../utils/format";
 import {
   type CollectionWithProfits,

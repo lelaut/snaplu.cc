@@ -5,12 +5,3 @@ export const ArtistLink = ({ name, link }: { name: string; link: string }) => (
     {name}
   </Link>
 );
-
-export const PlayLink = ({ link }: { link: string }) => (
-  <Link
-    href={link}
-    className="rounded-full bg-green-400 px-6 py-1 font-bold text-green-800 shadow-2xl shadow-green-500"
-  >
-    Play
-  </Link>
-);
