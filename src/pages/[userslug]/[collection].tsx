@@ -70,6 +70,15 @@ export const getStaticProps: GetStaticProps<{
     select: {
       id: true,
       producerId: true,
+      producer: {
+        select: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
       name: true,
       description: true,
       gameplayPriceRef: true,
@@ -96,10 +105,12 @@ export const getStaticProps: GetStaticProps<{
 
   return {
     props: {
+      userslug: params.userslug as string,
       collection: {
         id: collection.id,
         name: collection.name,
         description: collection.description,
+        creatorUsername: collection.producer.user.name ?? "",
         // TODO: fetch price from stripe
         freeCards: await Promise.all(
           collection.cards.map(async (card) => ({

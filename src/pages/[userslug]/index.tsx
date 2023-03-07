@@ -78,7 +78,7 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
 export default UserPage;
 
 export const getStaticProps: GetStaticProps<{
-  user?: {
+  user: {
     slug: string;
     name: string;
     description: string;
