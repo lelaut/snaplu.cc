@@ -58,7 +58,7 @@ enum CardRarity {
 model Card {
     id String @id
 
-    generation   Int
+    generation   Int         @unique @default(autoincrement())
     collectionId String
     rarity       CardRarity?
     embeddedAt   DateTime?
@@ -66,8 +66,6 @@ model Card {
     collection Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
     consumers  ConsumerCard[]
     gameplays  Gameplay[]
-
-    @@unique([generation, collectionId])
 }
 
 // TODO: add payment information

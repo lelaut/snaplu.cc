@@ -7,7 +7,7 @@ To run [this](https://github.com/facebookresearch/sscd-copy-detection) model on 
 First you need to download the model:
 
 ```console
-# It can be the large but slower one(1024):
+# It can be the large but slower one(1024, this would need to change vsearch config):
 curl https://dl.fbaipublicfiles.com/sscd-copy-detection/sscd_disc_large.torchscript.pt -o model.torchscript.pt
 
 # Or the smaller but faster(512):

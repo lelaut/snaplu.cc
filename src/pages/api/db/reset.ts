@@ -5,6 +5,7 @@ import { prisma } from "../../../server/db";
 import storage from "../../../server/storage";
 import { flushDb } from "../../../utils/db";
 import { createFakeUsers, randomImage } from "../../../utils/fake";
+import { untilResolveAll } from "../../../utils/promise";
 
 const handler: NextApiHandler = async (req, res) => {
   await flushDb(prisma);
@@ -22,7 +23,7 @@ const handler: NextApiHandler = async (req, res) => {
     },
   });
 
-  await Promise.all(
+  await untilResolveAll(
     data.map(async ($, i) => {
       const uploadUrl = await storage.urlForUploadingCard({
         userId: $.collection.producerId,

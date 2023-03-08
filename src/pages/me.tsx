@@ -9,7 +9,7 @@ import {
   type CardGridItem,
   CardsGrid,
   cardsPerLine,
-  type CreatorCollectionList,
+  CreatorCollectionList,
 } from "../components/Collection";
 import { LayoutCentered, LayoutWithNav } from "../components/Layout";
 import { Spin } from "../components/Icon";

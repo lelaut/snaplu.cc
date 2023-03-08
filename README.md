@@ -8,7 +8,7 @@ To run this project in developer mode you'll need to follow the steps bellow.
 
 ### Install
 
-1. Install [cog](https://github.com/replicate/cog) CLI.
+1. Follow the instructions defined at `src/server/services/embedding/README.md`
 
 ### Deploy
 
