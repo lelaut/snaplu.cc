@@ -168,9 +168,9 @@ const CreatePage: NextPage = () => {
     const createResponse = await createCollection.mutateAsync({
       name,
       description,
-      cards: cardRarity.map((rarity, generation) => ({
+      cards: cardRarity.map((ridx, generation) => ({
         generation,
-        rarity,
+        rarity: rarity[ridx ?? -1]?.value,
       })) as unknown as NonEmpty<{ generation: number; rarity: string }>,
       price: {
         currency: price[0]?.currency ?? "usd",
@@ -382,10 +382,11 @@ const CreatePage: NextPage = () => {
                               style={{
                                 backgroundColor:
                                   rarity[cardRarity[i] as number]?.background,
-                                color: rarity[cardRarity[i] as number]?.text,
+                                color:
+                                  rarity[cardRarity[i] as number]?.onBackground,
                               }}
                             >
-                              {rarity[cardRarity[i] as number]?.name ?? "Free"}{" "}
+                              {rarity[cardRarity[i] as number]?.label ?? "Free"}{" "}
                               ⇾
                             </button>
                           </div>
@@ -410,12 +411,12 @@ const CreatePage: NextPage = () => {
                               key={j}
                               style={{
                                 backgroundColor: $.background,
-                                color: $.text,
+                                color: $.onBackground,
                               }}
                               className="cursor-pointer p-1 hover:opacity-80"
                               onClick={() => handleCardRarityChange(i, j)}
                             >
-                              {$.name}
+                              {$.label}
                             </li>
                           ))}
                         </ul>
