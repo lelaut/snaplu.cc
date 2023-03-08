@@ -5,7 +5,6 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { supportedCurrencies } from "../../../utils/payment";
 import { prisma } from "../../db";
-import { rarity } from "../../../utils/rarity";
 
 // TODO: add a slug to the collection model, this should also have a URL preview when
 // creating a collection.
@@ -137,5 +136,47 @@ export const collectionRouter = createTRPCRouter({
       return {
         redirect: `${userName}/${collectionId}`,
       };
+    }),
+
+  cardsUnlocked: protectedProcedure
+    .input(
+      z.object({ producerId: z.string(), collectionId: z.string().optional() })
+    )
+    .query(async ({ input: { producerId, collectionId }, ctx }) => {
+      const consumerId = ctx.session?.user.id;
+      return await Promise.all(
+        (
+          await ctx.prisma.consumerCard.findMany({
+            where: {
+              card: {
+                collectionId,
+                collection: {
+                  producerId,
+                },
+              },
+              consumerId,
+            },
+            select: {
+              cardId: true,
+              card: {
+                select: {
+                  collectionId: true,
+                  collection: {
+                    select: {
+                      producerId: true,
+                    },
+                  },
+                },
+              },
+            },
+          })
+        ).map(async ($) => ({
+          url: await ctx.storage.urlForFetchingCard({
+            userId: $.card.collection.producerId,
+            collectionId: $.card.collectionId,
+            cardId: $.cardId,
+          }),
+        }))
+      );
     }),
 });

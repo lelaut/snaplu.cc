@@ -10,14 +10,21 @@ import { ArtistLink } from "../../components/Link";
 import { PlayAction } from "../../components/Action";
 import {
   CollectionBlockedCard,
+  CollectionCardLoading,
   CollectionFreeCard,
 } from "../../components/Collection";
 import { prisma } from "../../server/db";
 import storage from "../../server/storage";
+import { api } from "../../utils/api";
 
 const CollectionPage: NextPage<
   InferGetStaticPropsType<typeof getStaticProps>
 > = ({ userslug, collection }) => {
+  const unlockedCards = api.collection.cardsUnlocked.useQuery({
+    producerId: collection.producerId,
+    collectionId: collection.id,
+  });
+
   return (
     <LayoutWithNav>
       <LayoutWithFixedContext
@@ -26,7 +33,7 @@ const CollectionPage: NextPage<
         contextSubtitle={
           <p>
             <span className="opacity-50">by</span>{" "}
-            <ArtistLink name={collection.creatorUsername} slug={userslug} />
+            <ArtistLink name={collection.producerUsername} slug={userslug} />
           </p>
         }
         // TODO: add crazy animation when hovering
@@ -36,7 +43,20 @@ const CollectionPage: NextPage<
           {collection.freeCards.map((card) => (
             <CollectionFreeCard key={card.url} url={card.url} />
           ))}
-          <CollectionBlockedCard amount={collection.numberOfBlockedCards} />
+          {typeof unlockedCards.data !== "undefined" ? (
+            <>
+              {unlockedCards.data.map((card) => (
+                <CollectionFreeCard key={card.url} url={card.url} />
+              ))}
+              <CollectionBlockedCard
+                amount={
+                  collection.numberOfBlockedCards - unlockedCards.data.length
+                }
+              />
+            </>
+          ) : (
+            <CollectionCardLoading />
+          )}
         </div>
       </LayoutWithFixedContext>
     </LayoutWithNav>
@@ -51,7 +71,8 @@ export const getStaticProps: GetStaticProps<{
     id: string;
     name: string;
     description: string;
-    creatorUsername: string;
+    producerId: string;
+    producerUsername: string;
 
     freeCards: {
       url: string;
@@ -110,7 +131,8 @@ export const getStaticProps: GetStaticProps<{
         id: collection.id,
         name: collection.name,
         description: collection.description,
-        creatorUsername: collection.producer.user.name ?? "",
+        producerId: collection.producerId,
+        producerUsername: collection.producer.user.name ?? "",
         // TODO: fetch price from stripe
         freeCards: await Promise.all(
           collection.cards.map(async (card) => ({

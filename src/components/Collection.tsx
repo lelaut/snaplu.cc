@@ -152,6 +152,17 @@ export const CollectionBlockedCard = ({ amount }: { amount: number }) => (
   </div>
 );
 
+export const CollectionCardLoading = () => {
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded bg-neutral-100 shadow dark:bg-neutral-700"
+      style={{ minWidth: MIN_CARD_WIDTH, height: MIN_CARD_WIDTH * CARD_ASPECT }}
+    >
+      <Spin size={32} />
+    </div>
+  );
+};
+
 export interface CardGridItem {
   id: string;
   generation: number;

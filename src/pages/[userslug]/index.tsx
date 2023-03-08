@@ -8,6 +8,7 @@ import Link from "next/link";
 
 import {
   CollectionBlockedCard,
+  CollectionCardLoading,
   CollectionFreeCard,
 } from "../../components/Collection";
 import { LayoutWithNav, LayoutWithFixedContext } from "../../components/Layout";
@@ -15,31 +16,30 @@ import { PlayAction } from "../../components/Action";
 import { prisma } from "../../server/db";
 import storage from "../../server/storage";
 import { collectionLink } from "../../utils/format";
+import { api } from "../../utils/api";
 
-// TODO: fetch for cards that are unblocked for this particular user
 const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
-  user,
+  producer,
 }) => {
-  // TODO: set 404.tsx page
-  if (typeof user === "undefined") {
-    return <p>error</p>;
-  }
+  const unlockedCards = api.collection.cardsUnlocked.useQuery({
+    producerId: producer.id,
+  });
 
   return (
     <LayoutWithNav>
       <LayoutWithFixedContext
-        contextTitle={user.name}
+        contextTitle={producer.name}
         contextAction={<button>Follow</button>}
-        contextContent={<p>{user.description}</p>}
+        contextContent={<p>{producer.description}</p>}
       >
         <div className="flex flex-col gap-4 p-4">
-          {user.collections.map((collection) => (
+          {producer.collections.map((collection) => (
             <div key={collection.name} className="p-2">
               <div className="flex items-center justify-between p-4">
                 <div className="min-w-0">
                   <Link
                     href={collectionLink({
-                      userslug: user.slug,
+                      userslug: producer.slug,
                       collectionId: collection.id,
                     })}
                     className="truncate text-lg font-bold tracking-wider transition hover:opacity-50"
@@ -54,7 +54,7 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
               </div>
               <Link
                 href={collectionLink({
-                  userslug: user.slug,
+                  userslug: producer.slug,
                   collectionId: collection.id,
                 })}
               >
@@ -62,9 +62,21 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
                   {collection.freeCards.map((card) => (
                     <CollectionFreeCard key={card.url} url={card.url} />
                   ))}
-                  <CollectionBlockedCard
-                    amount={collection.numberOfBlockedCards}
-                  />
+                  {typeof unlockedCards.data !== "undefined" ? (
+                    <>
+                      {unlockedCards.data.map((card) => (
+                        <CollectionFreeCard key={card.url} url={card.url} />
+                      ))}
+                      <CollectionBlockedCard
+                        amount={
+                          collection.numberOfBlockedCards -
+                          unlockedCards.data.length
+                        }
+                      />
+                    </>
+                  ) : (
+                    <CollectionCardLoading />
+                  )}
                 </div>
               </Link>
             </div>
@@ -78,7 +90,8 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
 export default UserPage;
 
 export const getStaticProps: GetStaticProps<{
-  user: {
+  producer: {
+    id: string;
     slug: string;
     name: string;
     description: string;
@@ -139,7 +152,8 @@ export const getStaticProps: GetStaticProps<{
 
   return {
     props: {
-      user: {
+      producer: {
+        id: data.id,
         slug: params.userslug as string,
         name: data.nickname,
         description: data.description,
