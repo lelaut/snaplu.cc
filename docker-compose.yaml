@@ -5,6 +5,8 @@ services:
     container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
     image: localstack/localstack
     hostname: s3
+    # https://github.com/localstack/localstack/issues/2631
+    # https://github.com/localstack/localstack/pull/3690
     networks:
       default:
         aliases:
