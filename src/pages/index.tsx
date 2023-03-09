@@ -29,10 +29,12 @@ const HomePage: NextPage = () => {
   const cards = explore.data?.pages.flatMap((it) => it.cards) ?? [];
 
   // TODO: change URL to use the hash
-  const handleCardClick = async ({ id }: CardModel) => {
+  const handleCardClick = async (cardId: string) => {
     await explore.refetch();
-    setReference(id === reference ? undefined : id);
+    setReference(cardId === reference ? undefined : cardId);
   };
+
+  console.log({ cards });
 
   return (
     <>

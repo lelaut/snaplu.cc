@@ -5,9 +5,9 @@
 import { env } from "../env.mjs";
 
 const CollectionSchema = JSON.stringify({
-  name: "test_collection",
+  name: env.VSEARCH_COLLECTION,
   vectors: {
-    size: 4,
+    size: 512,
     distance: "Cosine",
   },
 });
@@ -32,7 +32,7 @@ class VSearchSystem {
   // TODO: this will need to change to support gRPC
   private async send(method: string, action: string, body?: string) {
     return await fetch(
-      `${env.VSEARCH_PROTOCOL}://${env.VSEARCH_HOST}:${env.VSEARCH_PORT}/${action}`,
+      `${env.VSEARCH_PROTOCOL}://${env.VSEARCH_HOST}:${env.VSEARCH_HPORT}/${action}`,
       typeof body !== "undefined"
         ? {
             method,

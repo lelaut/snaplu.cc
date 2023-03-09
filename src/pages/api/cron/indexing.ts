@@ -10,6 +10,7 @@ const handler: NextApiHandler = async (req, res) => {
   const cards = await prisma.card.findMany({
     where: {
       embeddedAt: null,
+      rarity: null,
     },
     select: {
       id: true,

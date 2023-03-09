@@ -1,8 +1,13 @@
 import { z } from "zod";
-import { v4 as uuid } from "uuid";
+import { type inferProcedureOutput } from "@trpc/server";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { fakeDelay } from "../../../utils/fake";
+import vsearch from "../../vsearch";
+import { AppRouter } from "../root";
+
+export type ExploreCardsOutput = inferProcedureOutput<
+  AppRouter["_def"]["procedures"]["explore"]["cards"]
+>;
 
 export const exploreRouter = createTRPCRouter({
   cards: publicProcedure
@@ -13,44 +18,57 @@ export const exploreRouter = createTRPCRouter({
         cursor: z.number().nullish(),
       })
     )
-    .query<{
-      cards: CardModel[];
-      cursorStep: number;
-      nextCursor: number;
-    }>(({ input, ctx: { session } }) => {
-      return fakeDelay(() => ({
-        cards: Array.from(Array(input.cardsPerLine * 10).keys()).map<CardModel>(
-          (generation) => {
-            const id =
-              generation + (input.cursor ?? 0) === 0 && input.reference
-                ? input.reference
-                : uuid();
-            const creator = {
-              username: `creator_${generation}`,
-              link: `/${`creator_${generation}`}`,
-            };
-            const collection = {
-              slug: `collection_${generation}`,
-              size: Math.floor(Math.random() * 10 + 10),
-              playcost: +(Math.random() * 0.9 + 0.1).toFixed(2),
-              link: `/${creator.username}/${`collection_${generation}`}`,
-              creator,
-            };
+    .query(async ({ input, ctx }) => {
+      const cursorStep = 10;
+      const offset = input.cursor ?? 0;
 
-            return {
-              reference:
-                input.reference ?? `USER_${session?.user?.id ?? "UNDEFINED"}`,
-              id,
-              generation: generation + (input.cursor ?? 0),
+      const searchResponse = await vsearch.search({
+        vector: new Array(512).fill(0) as number[],
+        limit: cursorStep,
+        offset,
+      });
+      console.log({ searchResponse });
+      // TODO: put this info in vsearch metadata so you don't need to fetch it
+      const cards = await Promise.all(
+        (
+          await ctx.prisma.card.findMany({
+            where: {
+              generation: {
+                in: searchResponse.result ?? [],
+              },
+            },
+            select: {
+              id: true,
+              generation: true,
+              collectionId: true,
+              collection: {
+                select: {
+                  name: true,
+                  producerId: true,
+                  producer: {
+                    select: {
+                      nickname: true,
+                    },
+                  },
+                },
+              },
+            },
+          })
+        ).map(async ($) => ({
+          id: $.id,
+          generation: $.generation,
+          url: await ctx.storage.urlForFetchingCard({
+            userId: $.collection.producerId,
+            collectionId: $.collectionId,
+            cardId: $.id,
+            forever: true,
+          }),
+          collectionId: $.collectionId,
+          collectionName: $.collection.name,
+          producerName: $.collection.producer.nickname,
+        }))
+      );
 
-              link: `/${creator.username}/${collection.slug}#${id}`,
-              slug: `card_${generation}`,
-              collection,
-            };
-          }
-        ),
-        cursorStep: input.cardsPerLine * 10,
-        nextCursor: (input.cursor ?? 0) + input.cardsPerLine * 10,
-      }));
+      return { cards, cursorStep, nextCursor: offset + cursorStep };
     }),
 });
