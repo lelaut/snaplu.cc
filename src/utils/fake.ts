@@ -1,8 +1,7 @@
 import { type PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 
-import { type MonthlyProfit } from "./models";
-import { dayjs } from "./format";
+import { dayjs, s3Link } from "./format";
 import { hashcode } from "./core";
 
 export function fakeArray(min: number, max: number) {
@@ -231,16 +230,12 @@ export async function createFakeCollection(
 
 interface RandomImageProps {
   id: string;
-  width: number;
-  height: number;
 }
 
-export function randomImage({ id, width, height }: RandomImageProps) {
-  // https://picsum.photos/images#34
-  const TOTAL_IMAGES = 1084;
-  const img = hashcode(id) % TOTAL_IMAGES;
+export function randomImage({ id }: RandomImageProps) {
+  // TODO: get this value dynamically(not sure what is the best approach...)
+  const TOTAL_IMAGES = 2;
+  const key = `${Math.abs(hashcode(id)) % TOTAL_IMAGES}.jpg`;
 
-  return `https://picsum.photos/id/${img}/${Math.floor(width)}/${Math.floor(
-    height
-  )}`;
+  return s3Link({ bucket: "fake-images", key });
 }

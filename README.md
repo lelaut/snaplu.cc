@@ -4,7 +4,7 @@ Gamble money for private content.
 
 ## Development
 
-To run this project in developer mode you'll need to follow the steps bellow.
+To run this project in developer mode you'll need to follow the steps below.
 
 ### Install
 
@@ -19,21 +19,17 @@ cd src/server/services/embedding`
 cog build -t embedding
 ```
 
-2. Run docker compose to get the development environment setup
+2. If you want to populate images for development(check `src/utils/fake.ts/randomImage()`), please do:
+
+```console
+mkdir -p volumes/imgs
+# Put whatever image you want inside there
+```
+
+3. Run docker compose to get the development environment setup
 
 ```console
 docker compose up -d
-```
-
-3. Create the s3 bucket inside the localstack container
-
-<!-- TODO: remove this step https://stackoverflow.com/questions/53619901/auto-create-s3-buckets-on-localstack or you can make a terraform file that will
-take care of this? -->
-
-```console
-docker exec -it localstack_main \
-  /bin/bash -c \
-  'awslocal s3api create-bucket --bucket ${AWS_S3_BUCKET} --region ${AWS_DEFAULT_REGION}'
 ```
 
 **🚀 After this you should be set to go 🚀**

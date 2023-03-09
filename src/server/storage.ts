@@ -7,7 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "../env.mjs";
-import { bucketKey } from "../utils/format";
+import { bucketKey, s3Link } from "../utils/format";
 
 interface UploadCardParams {
   userId: string;
@@ -52,7 +52,7 @@ class StorageSystem {
         ? new S3Client({ region: env.AWS_DEFAULT_REGION })
         : new S3Client({
             region: env.AWS_DEFAULT_REGION,
-            endpoint: `${env.AWS_S3_PROTOCOL}://${env.AWS_S3_HOST}:${env.AWS_S3_PORT}`,
+            endpoint: s3Link(),
           });
   }
 

@@ -13,6 +13,7 @@ export const formatBigintMoney = (n: bigint | number) =>
 import _dayjs from "dayjs";
 import _duration from "dayjs/plugin/duration";
 import _relativeTime from "dayjs/plugin/relativeTime";
+import { env } from "../env.mjs";
 
 _dayjs.extend(_duration);
 _dayjs.extend(_relativeTime);
@@ -42,3 +43,13 @@ interface ProducerLinkProps {
 }
 
 export const producerLink = ({ userslug }: ProducerLinkProps) => `/${userslug}`;
+
+interface S3LinkProps {
+  bucket?: string;
+  key?: string;
+}
+
+export const s3Link = (props?: S3LinkProps) =>
+  `${env.AWS_S3_PROTOCOL}://${props?.bucket?.concat(".") ?? ""}${
+    env.AWS_S3_HOST
+  }:${env.AWS_S3_PORT}/${props?.key ?? ""}`;

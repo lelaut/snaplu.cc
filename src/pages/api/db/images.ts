@@ -3,6 +3,7 @@ import { env } from "../../../env.mjs";
 
 import { prisma } from "../../../server/db";
 import storage from "../../../server/storage";
+import { s3Link } from "../../../utils/format";
 
 const handler: NextApiHandler = async (req, res) => {
   const collection = await prisma.collection.findMany({
@@ -22,7 +23,7 @@ const handler: NextApiHandler = async (req, res) => {
         })
       ).cards?.map(($) => ({
         ...$,
-        url: `${env.AWS_S3_PROTOCOL}://${env.AWS_S3_BUCKET}.${env.AWS_S3_HOST}:${env.AWS_S3_PORT}/${$.key}`,
+        url: s3Link({ bucket: env.AWS_S3_BUCKET, key: $.key }),
       })),
     }))
   );
