@@ -27,6 +27,9 @@ docker compose up -d
 
 3. Create the s3 bucket inside the localstack container
 
+<!-- TODO: remove this step https://stackoverflow.com/questions/53619901/auto-create-s3-buckets-on-localstack or you can make a terraform file that will
+take care of this? -->
+
 ```console
 docker exec -it localstack_main \
   /bin/bash -c \

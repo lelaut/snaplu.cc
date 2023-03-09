@@ -52,7 +52,7 @@ class StorageSystem {
         ? new S3Client({ region: env.AWS_DEFAULT_REGION })
         : new S3Client({
             region: env.AWS_DEFAULT_REGION,
-            endpoint: "http://localhost.localstack.cloud:4566/",
+            endpoint: `${env.AWS_S3_PROTOCOL}://${env.AWS_S3_HOST}:${env.AWS_S3_PORT}`,
           });
   }
 

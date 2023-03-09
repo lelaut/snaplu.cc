@@ -18,9 +18,11 @@ export function getSignedUrlPattern(
   action: "PutObject" | "GetObject"
 ) {
   return new RegExp(
-    `http:\/\/${
+    `${env.AWS_S3_PROTOCOL}:\/\/${
       env.AWS_S3_BUCKET
-    }\\.localhost\\.localstack\\.cloud:4566\/${key}\\?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=${
+    }${env.AWS_S3_HOST.replaceAll(".", "\\.")}:${
+      env.AWS_S3_PORT
+    }\/${key}\\?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=${
       env.AWS_ACCESS_KEY_ID
     }%2[^%]+%2F${
       env.AWS_DEFAULT_REGION
