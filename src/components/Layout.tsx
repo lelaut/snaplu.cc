@@ -28,7 +28,11 @@ export const BaseLayout = ({
   );
 };
 
-export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
+interface LayoutWithNavProps {
+  children: (marginTop: number, marginBottom: number) => ReactNode;
+}
+
+export const LayoutWithNav = ({ children }: LayoutWithNavProps) => {
   const navRef = useRef<HTMLDivElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +44,7 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
     <>
       <nav
         ref={navRef}
-        className="fixed z-50 flex w-screen items-center gap-4 border-b border-neutral-200 bg-neutral-50/80 p-2 text-neutral-900 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-50 md:p-4"
+        className="fixed top-0  z-50 flex w-screen items-center gap-4 border-b border-neutral-200 bg-neutral-50/80 p-2 text-neutral-900 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80 dark:text-neutral-50 md:p-4"
       >
         <div className="flex flex-1 gap-2 md:flex-wrap md:gap-4">
           <Logo />
@@ -58,13 +62,11 @@ export const LayoutWithNav = ({ children }: { children: ReactNode }) => {
           )}
         </div>
       </nav>
-      <BaseLayout
-        style={{
-          paddingTop: navRef.current?.clientHeight ?? 0,
-          paddingBottom: bannerRef.current?.clientHeight ?? 0,
-        }}
-      >
-        {children}
+      <BaseLayout>
+        {children(
+          navRef.current?.clientHeight ?? 0,
+          bannerRef.current?.clientHeight ?? 0
+        )}
       </BaseLayout>
 
       {!isAuthenticated && (

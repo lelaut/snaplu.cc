@@ -1,6 +1,5 @@
-import { NextApiHandler } from "next";
+import { type NextApiHandler } from "next";
 
-import { CARD_ASPECT, MIN_CARD_WIDTH } from "../../../components/Collection";
 import { prisma } from "../../../server/db";
 import storage from "../../../server/storage";
 import { flushDb } from "../../../utils/db";
@@ -24,7 +23,7 @@ const handler: NextApiHandler = async (req, res) => {
   });
 
   await untilResolveAll(
-    data.map(async ($, i) => {
+    data.map(async ($) => {
       const uploadUrl = await storage.urlForUploadingCard({
         userId: $.collection.producerId,
         collectionId: $.collection.id,
@@ -34,8 +33,6 @@ const handler: NextApiHandler = async (req, res) => {
       const image = await fetch(
         randomImage({
           id: $.id,
-          width: MIN_CARD_WIDTH,
-          height: MIN_CARD_WIDTH * CARD_ASPECT,
         })
       );
       const blob = await image.blob();
@@ -47,7 +44,26 @@ const handler: NextApiHandler = async (req, res) => {
     })
   );
 
-  res.status(200).json({ status: "success" });
+  const collections = await prisma.collection.findMany({
+    select: {
+      id: true,
+      producerId: true,
+    },
+  });
+
+  const cards = (
+    await Promise.all(
+      collections.map(async ($) => {
+        const { cards } = await storage.getCollectionCards({
+          userId: $.producerId,
+          collectionId: $.id,
+        });
+        return cards ?? [];
+      })
+    )
+  ).flatMap(($) => $);
+
+  res.status(200).json({ cards });
 };
 
 export default handler;

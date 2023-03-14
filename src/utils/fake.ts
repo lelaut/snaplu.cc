@@ -4,10 +4,12 @@ import { v4 as uuidv4 } from "uuid";
 import { dayjs, s3Link } from "./format";
 import { hashcode } from "./core";
 
+export function fakeNumber(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
 export function fakeArray(min: number, max: number) {
-  return Array.from(
-    Array(Math.floor(Math.random() * (max - min) + min)).keys()
-  );
+  return Array.from(Array(fakeNumber(min, max)).keys());
 }
 
 export function fakeCollectionCards() {
@@ -158,10 +160,7 @@ export async function createFakeCollection(
   { randomness, producerId, cards, consumerId, profit }: FakeCollectionOptions
 ) {
   const collectionId = `FAKE_COL_${randomness}`;
-  const cardIds =
-    typeof cards !== "undefined"
-      ? fakeArray(2, 10).map((i) => `FAKE_CARD_${i}_${randomness}`)
-      : [];
+  const cardIds = cards ? fakeArray(2, 10).map(() => uuidv4()) : [];
   const consumerCardIds =
     typeof consumerId !== "undefined"
       ? fakeArray(2, cardIds.length).map(
@@ -188,13 +187,21 @@ export async function createFakeCollection(
     },
   });
 
+  // BUG: it's bugging for me, for some reason is enforcing the id and not applying the default one :(
+
   await Promise.all(
-    cardIds.map(($, i) =>
+    cardIds.map((id) =>
       prisma.card.create({
         data: {
-          id: $,
-          generation: i,
-          collectionId,
+          id,
+          collection: {
+            connect: {
+              id: collectionId,
+            },
+          },
+        },
+        select: {
+          id: true,
         },
       })
     )
@@ -234,7 +241,7 @@ interface RandomImageProps {
 
 export function randomImage({ id }: RandomImageProps) {
   // TODO: get this value dynamically(not sure what is the best approach...)
-  const TOTAL_IMAGES = 2;
+  const TOTAL_IMAGES = 368;
   const key = `${Math.abs(hashcode(id)) % TOTAL_IMAGES}.jpg`;
 
   return s3Link({ bucket: "fake-images", key });

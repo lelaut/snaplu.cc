@@ -11,7 +11,7 @@ import {
 } from "react-virtualized";
 
 import { type CollectionWithProfits } from "../utils/models";
-import { currency } from "../utils/format";
+import { collectionLink, currency } from "../utils/format";
 import { ArtistLink } from "./Link";
 import { Spin } from "./Icon";
 import { MonthlyProfitChart } from "./Chart";
@@ -25,11 +25,11 @@ export const cardsPerLine = (width: number) =>
 interface CardProps {
   cardId: string;
   cardUrl: string;
-  cardGeneration: number;
   collectionId: string;
   collectionName: string;
-  creatorId: string;
+  producerId: string;
   producerName: string;
+  producerSlug: string;
   collectionSize?: number;
   collectionPlaycost?: number;
   style: CSSProperties;
@@ -40,9 +40,8 @@ interface CardProps {
 export const CollectionCard = ({
   cardId,
   cardUrl,
-  cardGeneration,
-  creatorId,
   producerName,
+  producerSlug,
   collectionId,
   collectionName,
   collectionSize,
@@ -55,16 +54,16 @@ export const CollectionCard = ({
   // TODO: finish this
   return (
     <div
-      className={`flex cursor-pointer flex-col justify-between bg-indigo-500 p-4 hover:opacity-100 ${
-        isCurrentReference ? "border border-yellow-500" : "opacity-90"
+      className={`group flex cursor-pointer flex-col justify-between bg-cover bg-center bg-no-repeat p-2${
+        isCurrentReference ? " border border-yellow-500" : ""
       }`}
-      style={style}
+      style={{ ...style, backgroundImage: `url("${cardUrl}")` }}
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       onClick={async () => {
         await Promise.resolve(onClick(cardId));
       }}
     >
-      <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center justify-between p-2 text-xs">
         {([] as { content: string; color: string; colorIntensity: number }[])
           .concat(
             typeof collectionSize !== "undefined"
@@ -101,16 +100,19 @@ export const CollectionCard = ({
             </p>
           ))}
       </div>
-      <div className="">
-        <Link className="group" href={`/${creatorId}/${collectionId}`}>
-          <h3 className="transform truncate text-lg font-bold opacity-80 transition group-hover:translate-x-2 group-hover:-translate-y-1 group-hover:scale-105 group-hover:opacity-100">
-            {`[${cardGeneration}] ${collectionName}`}
+      <div className="rounded bg-black/50 p-2 opacity-0 backdrop-blur-sm duration-300 group-hover:opacity-100">
+        <Link
+          className="group"
+          href={collectionLink({ userslug: producerSlug, collectionId })}
+        >
+          <h3 className="transform truncate text-lg font-bold text-white opacity-80 transition group-hover:translate-x-2 group-hover:scale-105 group-hover:opacity-100">
+            {collectionName}
           </h3>
         </Link>
-        <p className="text-xs">
-          <span className="opacity-60">Collection by </span>
-          <ArtistLink name={producerName} link={`/${producerName}`} />
-        </p>
+        <div className="text-xs">
+          {/* TODO: correct value under slug */}
+          <ArtistLink name={producerName} slug={""} />
+        </div>
       </div>
     </div>
   );
@@ -165,11 +167,11 @@ export const CollectionCardLoading = () => {
 
 export interface CardGridItem {
   id: string;
-  generation: number;
   url: string;
   collectionId: string;
   collectionName: string;
   producerName: string;
+  producerSlug: string;
 }
 
 interface CardsGridProps {
@@ -182,6 +184,7 @@ interface CardsGridProps {
   fetchNextPage: () => Promise<void>;
 
   reference?: string;
+  containerStyle?: CSSProperties;
 }
 
 export const CardsGrid = ({
@@ -191,6 +194,7 @@ export const CardsGrid = ({
   isFetchingNextPage,
   fetchNextPage,
   reference,
+  containerStyle,
 }: CardsGridProps) => {
   const _cardsPerLine = cardsPerLine(width);
   const cardWidth = width / _cardsPerLine;
@@ -231,9 +235,8 @@ export const CardsGrid = ({
         style={style}
         cardId={card.id}
         cardUrl={card.url}
-        cardGeneration={card.generation}
-        creatorId={card.id}
         producerName={card.producerName}
+        producerSlug={card.producerSlug}
         collectionId={card.collectionId}
         collectionName={card.collectionName}
         isCurrentReference={card?.id === reference}
@@ -243,7 +246,7 @@ export const CardsGrid = ({
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="absolute h-full w-full">
       <InfiniteLoader
         isItemLoaded={(i) => (i > cards.length ? isFetchingNextPage : false)}
         itemCount={cards.length + 1}
@@ -256,6 +259,7 @@ export const CardsGrid = ({
                 cellRenderer={rowRender}
                 columnWidth={cardWidth}
                 columnCount={_cardsPerLine}
+                containerStyle={containerStyle}
                 // style={{ top: navHeight + 1 }}
                 height={height}
                 onSectionRendered={({

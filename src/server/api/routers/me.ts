@@ -46,7 +46,6 @@ export const meRouter = createTRPCRouter({
             card: {
               select: {
                 id: true,
-                generation: true,
                 collection: {
                   select: {
                     id: true,
@@ -81,7 +80,6 @@ export const meRouter = createTRPCRouter({
           cardId: $.card.id,
         }),
         id: $.card.id,
-        generation: $.card.generation,
         collectionId: $.card.collection.id,
         collectionName: $.card.collection.name,
         producerName: $.card.collection.producer.user.name,

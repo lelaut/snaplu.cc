@@ -168,10 +168,9 @@ const CreatePage: NextPage = () => {
     const createResponse = await createCollection.mutateAsync({
       name,
       description,
-      cards: cardRarity.map((ridx, generation) => ({
-        generation,
+      cards: cardRarity.map((ridx) => ({
         rarity: rarity[ridx ?? -1]?.value,
-      })) as unknown as NonEmpty<{ generation: number; rarity: string }>,
+      })) as unknown as NonEmpty<{ rarity: string }>,
       price: {
         currency: price[0]?.currency ?? "usd",
         unitAmount: price[0]?.unitAmount ?? 10,

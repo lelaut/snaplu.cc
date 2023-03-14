@@ -78,9 +78,15 @@ class StorageSystem {
     cardId,
     forever,
   }: FetchCardParams) {
+    const key = bucketKey(userId, collectionId, cardId);
+
+    if (forever) {
+      return s3Link({ bucket: env.AWS_S3_BUCKET, key });
+    }
+
     const command = new GetObjectCommand({
       Bucket: env.AWS_S3_BUCKET,
-      Key: bucketKey(userId, collectionId, cardId),
+      Key: key,
     });
     const url = await getSignedUrl(
       this.s3,

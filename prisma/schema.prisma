@@ -56,9 +56,8 @@ enum CardRarity {
 }
 
 model Card {
-    id String @id
+    id String @id @default(uuid())
 
-    generation   Int         @unique @default(autoincrement())
     collectionId String
     rarity       CardRarity?
     embeddedAt   DateTime?

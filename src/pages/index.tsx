@@ -34,8 +34,6 @@ const HomePage: NextPage = () => {
     setReference(cardId === reference ? undefined : cardId);
   };
 
-  console.log({ cards });
-
   return (
     <>
       <Head>
@@ -44,15 +42,22 @@ const HomePage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <LayoutWithNav>
-        <CardsGrid
-          width={width}
-          onClick={handleCardClick}
-          cards={cards}
-          isFetchingNextPage={explore.isFetchingNextPage}
-          fetchNextPage={
-            explore.fetchNextPage as unknown as () => Promise<void>
-          }
-        />
+        {(marginTop, marginBottom) => (
+          <CardsGrid
+            width={width}
+            onClick={handleCardClick}
+            cards={cards}
+            isFetchingNextPage={explore.isFetchingNextPage}
+            fetchNextPage={
+              explore.fetchNextPage as unknown as () => Promise<void>
+            }
+            containerStyle={{
+              marginTop,
+              marginBottom,
+            }}
+            reference={reference}
+          />
+        )}
       </LayoutWithNav>
     </>
   );

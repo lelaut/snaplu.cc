@@ -12,8 +12,10 @@ const CollectionSchema = JSON.stringify({
   },
 });
 
+type PointId = string;
+
 interface UploadParams {
-  batch: { ids: number[]; vectors: number[][]; payloads?: object[] };
+  batch: { ids: PointId[]; vectors: number[][]; payloads?: object[] };
 }
 
 interface SearchParams {
@@ -22,10 +24,24 @@ interface SearchParams {
   offset: number;
 }
 
-interface SearchResult {
+interface SearchItemResult {
+  id: PointId;
+  version: number;
+  score: number;
+  payload: null;
+  vector: null;
+}
+
+interface VSearchPoint {
+  id: PointId;
+  payload: any;
+  vector: number[];
+}
+
+interface VSearchResponse<T> {
   time: number;
   status: string;
-  result: number[];
+  result: T;
 }
 
 class VSearchSystem {
@@ -46,35 +62,48 @@ class VSearchSystem {
   }
 
   async upload(params: UploadParams) {
-    const response = await this.send(
+    if (
+      params.batch.ids.length !== params.batch.vectors.length ||
+      (typeof params.batch.payloads !== "undefined" &&
+        params.batch.payloads.length !== params.batch.vectors.length)
+    ) {
+      throw new Error("Invalid upload params length");
+    }
+    if (params.batch.ids.length === 0) {
+      return true;
+    }
+
+    const point = await this.send(
       "PUT",
       `collections/${env.VSEARCH_COLLECTION}/points?wait=true&ordering=weak`,
       JSON.stringify(params)
     );
 
     if (
-      !response.ok &&
+      !point.ok &&
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ((await response.json()).status.error as string).startsWith(
+      ((await point.json()).status.error as string).startsWith(
         "Not found: Collection"
       )
     ) {
-      await this.send(
+      const collection = await this.send(
         "PUT",
-        `collection/${env.VSEARCH_COLLECTION}`,
+        `collections/${env.VSEARCH_COLLECTION}`,
         CollectionSchema
       );
 
-      return (
-        await this.send(
-          "PUT",
-          `collections/${env.VSEARCH_COLLECTION}/points`,
-          JSON.stringify(params)
-        )
-      ).ok;
+      if (!collection.ok) return false;
+
+      const retry = await this.send(
+        "PUT",
+        `collections/${env.VSEARCH_COLLECTION}/points`,
+        JSON.stringify(params)
+      );
+
+      return retry.ok;
     }
 
-    return response.ok;
+    return point.ok;
   }
 
   async search(params: SearchParams) {
@@ -84,7 +113,16 @@ class VSearchSystem {
       JSON.stringify(params)
     );
 
-    return (await response.json()) as SearchResult;
+    return (await response.json()) as VSearchResponse<SearchItemResult[]>;
+  }
+
+  async retrieve(id: string) {
+    const response = await this.send(
+      "GET",
+      `collections/${env.VSEARCH_COLLECTION}/points/${id}`
+    );
+
+    return (await response.json()) as VSearchResponse<VSearchPoint>;
   }
 }
 

@@ -17,7 +17,6 @@ export const collectionRouter = createTRPCRouter({
         description: z.string(),
         cards: z
           .object({
-            generation: z.number().gte(0),
             rarity: z.enum(Object.values(CardRarity) as [string, ...string[]]),
           })
           .array()
@@ -78,7 +77,6 @@ export const collectionRouter = createTRPCRouter({
           cards: {
             create: cards.map((card) => ({
               id: card.id,
-              generation: card.generation,
               rarity: card.rarity as CardRarity,
             })),
           },
@@ -90,7 +88,7 @@ export const collectionRouter = createTRPCRouter({
         cardsNameToUploadLink: cards.reduce<Record<string, string>>(
           (acc, it) => ({
             ...acc,
-            [it.generation]: it.url,
+            [it.id]: it.url,
           }),
           {}
         ),
