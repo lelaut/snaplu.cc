@@ -6,6 +6,7 @@ import {
   type ReactElement,
   useState,
   type CSSProperties,
+  useEffect,
 } from "react";
 import Logo from "./Logo";
 import Searchbar from "./Searchbar";
@@ -36,9 +37,20 @@ export const LayoutWithNav = ({ children }: LayoutWithNavProps) => {
   const navRef = useRef<HTMLDivElement>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  const { status } = useSession();
+  const computeMarginTop = () => navRef.current?.clientHeight ?? 0;
+  const computeMarginBottom = () => bannerRef.current?.clientHeight ?? 0;
 
+  const [marginTop, setMarginTop] = useState(computeMarginTop());
+  const [marginBottom, setMarginBottom] = useState(computeMarginBottom());
+
+  const { status } = useSession();
   const isAuthenticated = status === "authenticated";
+
+  useEffect(() => {
+    setMarginTop(computeMarginTop());
+    setMarginBottom(computeMarginBottom());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [computeMarginTop(), computeMarginBottom()]);
 
   return (
     <>
@@ -62,12 +74,7 @@ export const LayoutWithNav = ({ children }: LayoutWithNavProps) => {
           )}
         </div>
       </nav>
-      <BaseLayout>
-        {children(
-          navRef.current?.clientHeight ?? 0,
-          bannerRef.current?.clientHeight ?? 0
-        )}
-      </BaseLayout>
+      <BaseLayout>{children(marginTop, marginBottom)}</BaseLayout>
 
       {!isAuthenticated && (
         <div
@@ -117,6 +124,7 @@ const EnterButton = () => (
 
 interface LayoutWithFixedContextProps {
   children: ReactNode;
+  style?: CSSProperties;
   contextTitle: string;
   contextSubtitle?: ReactElement;
   contextAction?: ReactElement;
@@ -125,6 +133,7 @@ interface LayoutWithFixedContextProps {
 
 export const LayoutWithFixedContext = ({
   children,
+  style,
   contextAction,
   contextTitle,
   contextSubtitle,
@@ -133,7 +142,10 @@ export const LayoutWithFixedContext = ({
   const [headerOpened, setHeaderOpened] = useState(false);
 
   const renderContextHeader = () => (
-    <div className="sticky top-0 flex w-full items-center justify-between border-b border-neutral-200 bg-neutral-50/80 p-4 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80">
+    <div
+      className="sticky top-0 flex w-full items-center justify-between border-b border-neutral-200 bg-neutral-50/80 p-4 backdrop-blur-sm dark:border-neutral-700 dark:bg-neutral-800/80"
+      style={style}
+    >
       <div
         className="max-w-screen flex items-center gap-2"
         onClick={() => setHeaderOpened(!headerOpened)}

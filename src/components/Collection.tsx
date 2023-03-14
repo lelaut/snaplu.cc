@@ -58,10 +58,7 @@ export const CollectionCard = ({
         isCurrentReference ? " border border-yellow-500" : ""
       }`}
       style={{ ...style, backgroundImage: `url("${cardUrl}")` }}
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      onClick={async () => {
-        await Promise.resolve(onClick(cardId));
-      }}
+      onClick={() => void onClick(cardId)}
     >
       <div className="flex items-center justify-between p-2 text-xs">
         {([] as { content: string; color: string; colorIntensity: number }[])
@@ -100,18 +97,19 @@ export const CollectionCard = ({
             </p>
           ))}
       </div>
-      <div className="rounded bg-black/50 p-2 opacity-0 backdrop-blur-sm duration-300 group-hover:opacity-100">
-        <Link
-          className="group"
-          href={collectionLink({ userslug: producerSlug, collectionId })}
-        >
-          <h3 className="transform truncate text-lg font-bold text-white opacity-80 transition group-hover:translate-x-2 group-hover:scale-105 group-hover:opacity-100">
+      <div
+        className="rounded bg-black/50 p-2 opacity-0 backdrop-blur-sm duration-300 group-hover:opacity-100"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
+        <Link href={collectionLink({ userslug: producerSlug, collectionId })}>
+          <h3 className="transform truncate text-lg font-bold text-white opacity-80 transition hover:text-white/50 group-hover:translate-x-2 group-hover:scale-105 group-hover:opacity-100">
             {collectionName}
           </h3>
         </Link>
         <div className="text-xs">
-          {/* TODO: correct value under slug */}
-          <ArtistLink name={producerName} slug={""} />
+          <ArtistLink name={producerName} slug={producerSlug} />
         </div>
       </div>
     </div>
@@ -124,7 +122,7 @@ interface CollectionFreeCardProps {
 
 export const CollectionFreeCard = ({ url }: CollectionFreeCardProps) => (
   <div
-    className="rounded bg-white/20 bg-contain bg-center bg-no-repeat p-2"
+    className="rounded bg-white/20 bg-cover bg-center bg-no-repeat p-2"
     style={{
       backgroundImage: `url("${url}")`,
       minWidth: MIN_CARD_WIDTH,

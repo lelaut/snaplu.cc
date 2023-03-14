@@ -27,62 +27,68 @@ const UserPage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
 
   return (
     <LayoutWithNav>
-      <LayoutWithFixedContext
-        contextTitle={producer.name}
-        contextAction={<button>Follow</button>}
-        contextContent={<p>{producer.description}</p>}
-      >
-        <div className="flex flex-col gap-4 p-4">
-          {producer.collections.map((collection) => (
-            <div key={collection.name} className="p-2">
-              <div className="flex items-center justify-between p-4">
-                <div className="min-w-0">
-                  <Link
-                    href={collectionLink({
-                      userslug: producer.slug,
-                      collectionId: collection.id,
-                    })}
-                    className="truncate text-lg font-bold tracking-wider transition hover:opacity-50"
-                  >
-                    {collection.name}
-                  </Link>
-                  <p className="truncate text-sm opacity-50">
-                    {collection.description}
-                  </p>
+      {(marginTop, marginBottom) => (
+        <LayoutWithFixedContext
+          contextTitle={producer.name}
+          contextAction={<button>Follow</button>}
+          contextContent={<p>{producer.description}</p>}
+          style={{ marginTop, marginBottom }}
+        >
+          <div
+            className="flex flex-col gap-4 p-4"
+            style={{ marginTop, marginBottom }}
+          >
+            {producer.collections.map((collection) => (
+              <div key={collection.name} className="p-2">
+                <div className="flex items-center justify-between p-4">
+                  <div className="min-w-0">
+                    <Link
+                      href={collectionLink({
+                        userslug: producer.slug,
+                        collectionId: collection.id,
+                      })}
+                      className="truncate text-lg font-bold tracking-wider transition hover:opacity-50"
+                    >
+                      {collection.name}
+                    </Link>
+                    <p className="truncate text-sm opacity-50">
+                      {collection.description}
+                    </p>
+                  </div>
+                  <PlayAction collectionId={collection.id} />
                 </div>
-                <PlayAction collectionId={collection.id} />
+                <Link
+                  href={collectionLink({
+                    userslug: producer.slug,
+                    collectionId: collection.id,
+                  })}
+                >
+                  <div className="flex gap-4 overflow-x-auto p-4">
+                    {collection.freeCards.map((card) => (
+                      <CollectionFreeCard key={card.url} url={card.url} />
+                    ))}
+                    {typeof unlockedCards.data !== "undefined" ? (
+                      <>
+                        {unlockedCards.data.map((card) => (
+                          <CollectionFreeCard key={card.url} url={card.url} />
+                        ))}
+                        <CollectionBlockedCard
+                          amount={
+                            collection.numberOfBlockedCards -
+                            unlockedCards.data.length
+                          }
+                        />
+                      </>
+                    ) : (
+                      <CollectionCardLoading />
+                    )}
+                  </div>
+                </Link>
               </div>
-              <Link
-                href={collectionLink({
-                  userslug: producer.slug,
-                  collectionId: collection.id,
-                })}
-              >
-                <div className="flex gap-4 overflow-x-auto p-4">
-                  {collection.freeCards.map((card) => (
-                    <CollectionFreeCard key={card.url} url={card.url} />
-                  ))}
-                  {typeof unlockedCards.data !== "undefined" ? (
-                    <>
-                      {unlockedCards.data.map((card) => (
-                        <CollectionFreeCard key={card.url} url={card.url} />
-                      ))}
-                      <CollectionBlockedCard
-                        amount={
-                          collection.numberOfBlockedCards -
-                          unlockedCards.data.length
-                        }
-                      />
-                    </>
-                  ) : (
-                    <CollectionCardLoading />
-                  )}
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
-      </LayoutWithFixedContext>
+            ))}
+          </div>
+        </LayoutWithFixedContext>
+      )}
     </LayoutWithNav>
   );
 };

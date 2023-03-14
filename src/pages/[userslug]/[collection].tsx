@@ -25,40 +25,50 @@ const CollectionPage: NextPage<
     collectionId: collection.id,
   });
 
+  console.log({ unlockedCards });
+
   return (
     <LayoutWithNav>
-      <LayoutWithFixedContext
-        contextContent={<p className="text-sm">{collection.description}</p>}
-        contextTitle={collection.name}
-        contextSubtitle={
-          <p>
-            <span className="opacity-50">by</span>{" "}
-            <ArtistLink name={collection.producerUsername} slug={userslug} />
-          </p>
-        }
-        // TODO: add crazy animation when hovering
-        contextAction={<PlayAction collectionId={collection.id} />}
-      >
-        <div className="flex flex-wrap justify-center gap-4 p-4">
-          {collection.freeCards.map((card) => (
-            <CollectionFreeCard key={card.url} url={card.url} />
-          ))}
-          {typeof unlockedCards.data !== "undefined" ? (
-            <>
-              {unlockedCards.data.map((card) => (
-                <CollectionFreeCard key={card.url} url={card.url} />
-              ))}
-              <CollectionBlockedCard
-                amount={
-                  collection.numberOfBlockedCards - unlockedCards.data.length
-                }
-              />
-            </>
-          ) : (
-            <CollectionCardLoading />
-          )}
-        </div>
-      </LayoutWithFixedContext>
+      {(marginTop, marginBottom) => (
+        <LayoutWithFixedContext
+          style={{ marginTop, marginBottom }}
+          contextContent={<p className="text-sm">{collection.description}</p>}
+          contextTitle={collection.name}
+          contextSubtitle={
+            <p>
+              <span className="opacity-50">by</span>{" "}
+              <ArtistLink name={collection.producerUsername} slug={userslug} />
+            </p>
+          }
+          // TODO: add crazy animation when hovering
+          contextAction={<PlayAction collectionId={collection.id} />}
+        >
+          <div
+            className="flex flex-wrap justify-center gap-4 p-4"
+            style={{ marginTop, marginBottom }}
+          >
+            {collection.freeCards.map((card) => (
+              <CollectionFreeCard key={card.url} url={card.url} />
+            ))}
+            {!unlockedCards.isFetched ? (
+              <CollectionCardLoading />
+            ) : typeof unlockedCards.data !== "undefined" ? (
+              <>
+                {unlockedCards.data.map((card) => (
+                  <CollectionFreeCard key={card.url} url={card.url} />
+                ))}
+                <CollectionBlockedCard
+                  amount={
+                    collection.numberOfBlockedCards - unlockedCards.data.length
+                  }
+                />
+              </>
+            ) : (
+              <></>
+            )}
+          </div>
+        </LayoutWithFixedContext>
+      )}
     </LayoutWithNav>
   );
 };
