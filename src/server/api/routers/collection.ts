@@ -5,7 +5,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { supportedCurrencies } from "../../../utils/payment";
 import { prisma } from "../../db";
-import { CardRarity } from "@prisma/client";
+import { RarityName } from "@prisma/client";
 
 // TODO: add a slug to the collection model, this should also have a URL preview when
 // creating a collection.
@@ -17,7 +17,8 @@ export const collectionRouter = createTRPCRouter({
         description: z.string(),
         cards: z
           .object({
-            rarity: z.enum(Object.values(CardRarity) as [string, ...string[]]),
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            rarity: z.enum(Object.values(RarityName) as [string, ...string[]]),
           })
           .array()
           .nonempty(),
@@ -60,7 +61,7 @@ export const collectionRouter = createTRPCRouter({
         userId,
         collectionId,
         collectionName: input.name,
-        price: input.price as any,
+        price: input.price,
       });
 
       await ctx.prisma.collection.create({
@@ -77,7 +78,7 @@ export const collectionRouter = createTRPCRouter({
           cards: {
             create: cards.map((card) => ({
               id: card.id,
-              rarity: card.rarity as CardRarity,
+              rarityName: card.rarity,
             })),
           },
         },
