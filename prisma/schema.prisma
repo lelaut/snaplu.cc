@@ -47,7 +47,14 @@ model CollectionProfit {
     @@id([collectionId, period])
 }
 
-enum CardRarity {
+model Rarity {
+    name     RarityName @id
+    dropRate Float
+
+    cards Card[]
+}
+
+enum RarityName {
     COMMON
     UNCOMMON
     RARE
@@ -59,10 +66,11 @@ model Card {
     id String @id @default(uuid())
 
     collectionId String
-    rarity       CardRarity?
+    rarityName   RarityName?
     embeddedAt   DateTime?
 
     collection Collection     @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+    rarity     Rarity?        @relation(fields: [rarityName], references: [name], onDelete: NoAction)
     consumers  ConsumerCard[]
     gameplays  Gameplay[]
 }

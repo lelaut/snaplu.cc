@@ -1,4 +1,4 @@
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   useRef,
@@ -8,6 +8,9 @@ import {
   type CSSProperties,
   useEffect,
 } from "react";
+
+import { signIn } from "../utils/auth";
+import { Person } from "./Icon";
 import Logo from "./Logo";
 import Searchbar from "./Searchbar";
 import ThemeSwitch from "./ThemeSwitch";
@@ -21,7 +24,7 @@ export const BaseLayout = ({
 }) => {
   return (
     <main
-      className="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
+      className="h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50"
       style={style}
     >
       {children}
@@ -68,8 +71,12 @@ export const LayoutWithNav = ({ children }: LayoutWithNavProps) => {
           </div>
           <ThemeSwitch />
           {isAuthenticated && (
-            <Link href="/me">
-              <button className="h-10 w-10 rounded-full bg-green-500" />
+            <Link
+              href="/me"
+              className="rounded-full border border-transparent bg-neutral-200 p-2 hover:border-indigo-400 dark:bg-neutral-700"
+            >
+              <Person size={20} className="fill-neutral-400" />
+              {/* <button className="h-10 w-10 rounded-full bg-green-500" /> */}
             </Link>
           )}
         </div>
@@ -98,11 +105,15 @@ export const LayoutWithNav = ({ children }: LayoutWithNavProps) => {
 
 interface LayoutCenteredProps {
   children: ReactNode;
+  style?: CSSProperties;
 }
 
-export const LayoutCentered = ({ children }: LayoutCenteredProps) => {
+export const LayoutCentered = ({ children, style }: LayoutCenteredProps) => {
   return (
-    <div className="mx-auto flex h-full w-full flex-col border-neutral-200 dark:border-neutral-700 md:max-w-screen-md md:border-x">
+    <div
+      className="mx-auto flex h-full w-full flex-col border-neutral-200 dark:border-neutral-700 md:max-w-screen-md md:border-x"
+      style={style}
+    >
       {children}
     </div>
   );
@@ -111,11 +122,7 @@ export const LayoutCentered = ({ children }: LayoutCenteredProps) => {
 const EnterButton = () => (
   <button
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    onClick={async () => {
-      await signIn("google", {
-        callbackUrl: "http://localhost:3000",
-      });
-    }}
+    onClick={signIn}
     className="rounded bg-neutral-800 px-4 py-1 text-neutral-50 drop-shadow-lg dark:bg-neutral-50 dark:text-neutral-900"
   >
     Enter

@@ -66,62 +66,64 @@ const MePage: NextPage = () => {
 
   return (
     <LayoutWithNav>
-      <LayoutCentered>
-        <div className="sticky flex w-full justify-between border-b border-inherit">
-          <div className="flex">
-            {tabs.map((it, idx) => (
-              <TabButton
-                isSelected={it.label === tab.label}
-                key={it.label}
-                label={it.label}
-                onClick={() => handleTabClick(idx)}
-              />
-            ))}
+      {(paddingTop, paddingBottom) => (
+        <LayoutCentered style={{ paddingTop, paddingBottom }}>
+          <div className="sticky flex w-full justify-between border-b border-inherit">
+            <div className="flex">
+              {tabs.map((it, idx) => (
+                <TabButton
+                  isSelected={it.label === tab.label}
+                  key={it.label}
+                  label={it.label}
+                  onClick={() => handleTabClick(idx)}
+                />
+              ))}
+            </div>
+            <button
+              className="px-4 text-red-500 hover:text-red-400"
+              // eslint-disable-next-line @typescript-eslint/no-misused-promises
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              Exit
+            </button>
           </div>
-          <button
-            className="px-4 text-red-500 hover:text-red-400"
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            onClick={() => signOut({ callbackUrl: "/" })}
+          <div
+            ref={tabRef}
+            className="min-h-0 flex-auto border-inherit"
+            style={{ overflowY: "auto" }}
           >
-            Exit
-          </button>
-        </div>
-        <div
-          ref={tabRef}
-          className="min-h-0 flex-auto border-inherit"
-          style={{ overflowY: "auto" }}
-        >
-          {tab.label === "Credit" &&
-            tab.render({
-              purchases: purchases.data?.purchases ?? [],
-              lastUpdate: purchases.dataUpdatedAt,
-              isUpdating: purchases.isFetching,
-            })}
-          {tab.label === "Deck" &&
-            tab.render({
-              cards: deck as CardGridItem[],
-              width: tabWidth,
-              fetchNextPage:
-                deckPages.fetchNextPage as unknown as () => Promise<void>,
-              isFetchingNextPage: deckPages.isFetchingNextPage,
-              onClick: () => {
-                console.log("clicked");
-              },
-            })}
-          {tab.label === "My Content" &&
-            tab.render({
-              ref: tabRef,
-              collectionsUpdatedAt: contentPages.dataUpdatedAt,
-              areCollectionsUpdating: contentPages.isRefetching,
-              totalProfitPerPeriod,
-              collections: contentCollections,
-              width: tabWidth,
-              isFetchingMoreCollections: contentPages.isFetchingNextPage,
-              fetchMoreCollections:
-                contentPages.fetchNextPage as unknown as () => Promise<void>,
-            })}
-        </div>
-      </LayoutCentered>
+            {tab.label === "Credit" &&
+              tab.render({
+                purchases: purchases.data?.purchases ?? [],
+                lastUpdate: purchases.dataUpdatedAt,
+                isUpdating: purchases.isFetching,
+              })}
+            {tab.label === "Deck" &&
+              tab.render({
+                cards: deck as CardGridItem[],
+                width: tabWidth,
+                fetchNextPage:
+                  deckPages.fetchNextPage as unknown as () => Promise<void>,
+                isFetchingNextPage: deckPages.isFetchingNextPage,
+                onClick: () => {
+                  console.log("clicked");
+                },
+              })}
+            {tab.label === "My Content" &&
+              tab.render({
+                ref: tabRef,
+                collectionsUpdatedAt: contentPages.dataUpdatedAt,
+                areCollectionsUpdating: contentPages.isRefetching,
+                totalProfitPerPeriod,
+                collections: contentCollections,
+                width: tabWidth,
+                isFetchingMoreCollections: contentPages.isFetchingNextPage,
+                fetchMoreCollections:
+                  contentPages.fetchNextPage as unknown as () => Promise<void>,
+              })}
+          </div>
+        </LayoutCentered>
+      )}
     </LayoutWithNav>
   );
 };

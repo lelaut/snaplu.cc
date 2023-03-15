@@ -12,6 +12,26 @@ export const gameRouter = createTRPCRouter({
         where: {
           id: input.gameplayId,
         },
+        select: {
+          collectionId: true,
+          consumerId: true,
+          cardId: true,
+          card: {
+            select: {
+              rarity: true,
+            },
+          },
+          collection: {
+            select: {
+              name: true,
+              producer: {
+                select: {
+                  slug: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (gameplay === null || gameplay.consumerId !== userId) {
@@ -19,14 +39,15 @@ export const gameRouter = createTRPCRouter({
       }
 
       return {
-        gameplay: {
-          ...gameplay,
-          url: await ctx.storage.urlForFetchingCard({
-            userId,
-            collectionId: gameplay.collectionId,
-            cardId: gameplay.cardId,
-          }),
-        },
+        producerSlug: gameplay.collection.producer.slug,
+        collectionId: gameplay.collectionId,
+        collectionName: gameplay.collection.name,
+        rarity: gameplay.card.rarity,
+        url: await ctx.storage.urlForFetchingCard({
+          userId,
+          collectionId: gameplay.collectionId,
+          cardId: gameplay.cardId,
+        }),
       };
     }),
 
@@ -39,6 +60,9 @@ export const gameRouter = createTRPCRouter({
       });
       const collection = await ctx.prisma.collection.findUnique({
         where: { id: input.collectionId },
+        select: {
+          gameplayPriceRef: true,
+        },
       });
 
       if (collection === null) {
@@ -62,8 +86,14 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
-      const [{ id: cardId }] = (await ctx.prisma
-        .$queryRaw`SELECT id FROM "Card" ORDER BY RANDOM() LIMIT 1;`) as string;
+      // inspired by: https://stackoverflow.com/a/56006340
+      const [{ id: cardId }] = await ctx.prisma.$queryRaw`
+          SELECT card.id, -LOG(RAND()) / rarity.dropRate AS priority FROM card 
+          INNER JOIN rarity ON card.rarityName = rarity.name
+          WHERE card.collectionId = '${input.collectionId}'
+          ORDER BY priority
+          LIMIT 1
+        `;
 
       const createGameplay = ctx.prisma.gameplay.create({
         data: { consumerId: userId, collectionId: input.collectionId, cardId },
@@ -79,11 +109,13 @@ export const gameRouter = createTRPCRouter({
         },
       });
 
-      const [gameplay] = await ctx.prisma.$transaction([
+      const [{ id: gameplayId }] = await ctx.prisma.$transaction([
         createGameplay,
         updateConsumer,
       ]);
 
-      return { gameplay };
+      return {
+        gameplayId,
+      };
     }),
 });

@@ -48,6 +48,6 @@ export const rarity: RarityItem[] = [
     onBackground: "color(srgb 0.2633 0.1696 0.53)",
     label: "Impossible",
     value: "IMPOSSIBLE",
-    // chance: 0.013,
+    // chance: 0.0013,
   },
 ];
