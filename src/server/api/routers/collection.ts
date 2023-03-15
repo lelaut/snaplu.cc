@@ -2,7 +2,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { TRPCError } from "@trpc/server";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { supportedCurrencies } from "../../../utils/payment";
 import { prisma } from "../../db";
 import { RarityName } from "@prisma/client";
@@ -138,12 +138,15 @@ export const collectionRouter = createTRPCRouter({
       };
     }),
 
-  cardsUnlocked: protectedProcedure
+  cardsUnlocked: publicProcedure
     .input(
       z.object({ producerId: z.string(), collectionId: z.string().optional() })
     )
     .query(async ({ input: { producerId, collectionId }, ctx }) => {
       const consumerId = ctx.session?.user.id;
+
+      if (typeof consumerId === "undefined") return [];
+
       return await Promise.all(
         (
           await ctx.prisma.consumerCard.findMany({
