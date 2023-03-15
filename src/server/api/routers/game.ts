@@ -90,7 +90,7 @@ export const gameRouter = createTRPCRouter({
       const [{ id: cardId }] = await ctx.prisma.$queryRaw`
           SELECT card.id, -LOG(RAND()) / rarity.dropRate AS priority FROM card 
           INNER JOIN rarity ON card.rarityName = rarity.name
-          WHERE card.collectionId = '${input.collectionId}'
+          WHERE card.collectionId = '${input.collectionId}' AND card.rarity IS NOT NULL
           ORDER BY priority
           LIMIT 1
         `;

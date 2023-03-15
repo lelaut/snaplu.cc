@@ -8,6 +8,7 @@ import { LayoutWithNav } from "../components/Layout";
 import { useWindowDimensions } from "../utils/hooks";
 import { cardsPerLine, CardsGrid } from "../components/Collection";
 
+// TODO: make the initial page cached/static
 const HomePage: NextPage = () => {
   const { asPath } = useRouter();
   const hash = asPath.split("#")[1];
