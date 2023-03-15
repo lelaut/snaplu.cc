@@ -1,4 +1,4 @@
-import { type PrismaClient } from "@prisma/client";
+import { type RarityName, type PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 
 import { dayjs, s3Link } from "./format";
@@ -60,7 +60,7 @@ export async function createFakeUsers(
   prisma: PrismaClient,
   randomness: number
 ) {
-  const producers = fakeArray(2, 10).map((i) => `FAKE_PRO_${i}_${randomness}`);
+  const producers = fakeArray(10, 20).map((i) => `FAKE_PRO_${i}_${randomness}`);
   const consumers = fakeArray(2, 10).map((i) => `FAKE_CON_${i}_${randomness}`);
 
   const consumerEntities = await Promise.all(
@@ -160,7 +160,7 @@ export async function createFakeCollection(
   { randomness, producerId, cards, consumerId, profit }: FakeCollectionOptions
 ) {
   const collectionId = `FAKE_COL_${randomness}`;
-  const cardIds = cards ? fakeArray(2, 10).map(() => uuidv4()) : [];
+  const cardIds = cards ? fakeArray(10, 20).map(() => uuidv4()) : [];
   const consumerCardIds =
     typeof consumerId !== "undefined"
       ? fakeArray(2, cardIds.length).map(
@@ -187,13 +187,39 @@ export async function createFakeCollection(
     },
   });
 
-  // BUG: it's bugging for me, for some reason is enforcing the id and not applying the default one :(
+  const dropRate: { [key: string]: number } = {
+    COMMON: 0.7992,
+    UNCOMMON: 0.1598,
+    RARE: 0.032,
+    EXTINCT: 0.0026,
+    IMPOSSIBLE: 0.0013,
+  };
+  const rarities = Object.keys(dropRate) as RarityName[];
+
+  await prisma.rarity.createMany({
+    data: rarities.map(($) => ({
+      name: $,
+      dropRate: dropRate[$ as string],
+    })),
+    skipDuplicates: true,
+  });
 
   await Promise.all(
-    cardIds.map((id) =>
-      prisma.card.create({
+    cardIds.map((id) => {
+      const r = Math.floor(Math.random() * (rarities.length + 2));
+      const rarity = rarities[r];
+
+      return prisma.card.create({
         data: {
           id,
+          rarity:
+            typeof rarity !== "undefined"
+              ? {
+                  connect: {
+                    name: rarity,
+                  },
+                }
+              : undefined,
           collection: {
             connect: {
               id: collectionId,
@@ -203,8 +229,8 @@ export async function createFakeCollection(
         select: {
           id: true,
         },
-      })
-    )
+      });
+    })
   );
 
   await Promise.all(
