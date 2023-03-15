@@ -5,8 +5,7 @@ import embedding from "../../../server/services/embedding";
 import storage from "../../../server/storage";
 import vsearch from "../../../server/vsearch";
 
-// TODO: this should not be run by anyone
-const handler: NextApiHandler = async (req, res) => {
+export async function indexing() {
   const cards = await prisma.card.findMany({
     where: {
       embeddedAt: null,
@@ -44,8 +43,7 @@ const handler: NextApiHandler = async (req, res) => {
     },
   });
   if (!success) {
-    res.status(500).end("Unable to upload to the search engine");
-    return;
+    throw new Error("Unable to upload to the search engine");
   }
 
   const cardIds = cards.map(($) => $.id);
@@ -61,8 +59,15 @@ const handler: NextApiHandler = async (req, res) => {
       embeddedAt,
     },
   });
+}
 
-  res.status(200).json({ ids: cardIds, embeddedAt });
+// TODO: this should not be run by anyone
+const handler: NextApiHandler = async (req, res) => {
+  try {
+    await indexing();
+  } catch (e) {
+    res.status(500).end((e as Error).message);
+  }
 };
 
 export default handler;

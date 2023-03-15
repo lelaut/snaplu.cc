@@ -2,12 +2,15 @@ import { type NextApiHandler } from "next";
 
 import { prisma } from "../../../server/db";
 import storage from "../../../server/storage";
+import vsearch from "../../../server/vsearch";
 import { flushDb } from "../../../utils/db";
 import { createFakeUsers, randomImage } from "../../../utils/fake";
 import { untilResolveAll } from "../../../utils/promise";
+import { indexing } from "../cron/indexing";
 
 const handler: NextApiHandler = async (req, res) => {
   await flushDb(prisma);
+  await vsearch.clear();
   await createFakeUsers(prisma, +new Date());
 
   const data = await prisma.card.findMany({
@@ -62,6 +65,12 @@ const handler: NextApiHandler = async (req, res) => {
       })
     )
   ).flatMap(($) => $);
+
+  try {
+    await indexing();
+  } catch (e) {
+    res.status(500).end((e as Error).message);
+  }
 
   res.status(200).json({ cards });
 };

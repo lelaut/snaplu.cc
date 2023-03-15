@@ -124,6 +124,25 @@ class VSearchSystem {
 
     return (await response.json()) as VSearchResponse<VSearchPoint>;
   }
+
+  async clear() {
+    await this.send(
+      "POST",
+      `collections/${env.VSEARCH_COLLECTION}/points/delete`,
+      JSON.stringify({
+        filter: {
+          must_not: [
+            {
+              key: "id",
+              match: {
+                value: "-1",
+              },
+            },
+          ],
+        },
+      })
+    );
+  }
 }
 
 const vsearch = new VSearchSystem();
