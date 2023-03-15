@@ -43,7 +43,6 @@ docker compose up -d
 - [x] Integrate new backend into frontend
 - [ ] Add missing features
   - Each card should have a rarity factor
-  - Following system
   - Search system
 - [ ] Use Terraform to automate infrastructure deployment, still need to choose what provider I'll use
   - https://vercel.com/guides/integrating-terraform-with-vercel

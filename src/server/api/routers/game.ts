@@ -24,6 +24,7 @@ export const gameRouter = createTRPCRouter({
           collection: {
             select: {
               name: true,
+              producerId: true,
               producer: {
                 select: {
                   slug: true,
@@ -44,7 +45,7 @@ export const gameRouter = createTRPCRouter({
         collectionName: gameplay.collection.name,
         rarity: gameplay.card.rarity,
         url: await ctx.storage.urlForFetchingCard({
-          userId,
+          userId: gameplay.collection.producerId,
           collectionId: gameplay.collectionId,
           cardId: gameplay.cardId,
         }),
@@ -87,16 +88,32 @@ export const gameRouter = createTRPCRouter({
       }
 
       // inspired by: https://stackoverflow.com/a/56006340
-      const [{ id: cardId }] = await ctx.prisma.$queryRaw`
-          SELECT card.id, -LOG(RAND()) / rarity.dropRate AS priority FROM card 
-          INNER JOIN rarity ON card.rarityName = rarity.name
-          WHERE card.collectionId = '${input.collectionId}' AND card.rarity IS NOT NULL
-          ORDER BY priority
+      const [selected] = await ctx.prisma.$queryRawUnsafe<
+        Array<{ id: string }>
+      >(
+        `
+          SELECT "public"."Card"."id", -LOG(RANDOM()) / "public"."Rarity"."dropRate" AS priority FROM "public"."Card" 
+          INNER JOIN "public"."Rarity" ON "public"."Card"."rarityName" = "public"."Rarity"."name"
+          WHERE ("public"."Card"."collectionId" = $1 AND "public"."Card"."rarityName" IS NOT NULL)
+          ORDER BY "priority"
           LIMIT 1
-        `;
+        `,
+        input.collectionId
+      );
+
+      if (typeof selected === "undefined") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No unblocked card for this collection",
+        });
+      }
 
       const createGameplay = ctx.prisma.gameplay.create({
-        data: { consumerId: userId, collectionId: input.collectionId, cardId },
+        data: {
+          consumerId: userId,
+          collectionId: input.collectionId,
+          cardId: selected.id,
+        },
       });
       const updateConsumer = ctx.prisma.consumer.update({
         where: {

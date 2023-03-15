@@ -55,7 +55,9 @@ const PlayPage: NextPage = () => {
 
       <div className="flex h-full flex-1 flex-col items-center justify-center">
         <h2 className="py-2 text-center text-lg tracking-widest">
-          {gameplay.data.collectionName} - {gameplay.data.rarity}
+          {`${gameplay.data.collectionName} - ${
+            gameplay.data.rarity?.name ?? "NONE"
+          }`}
         </h2>
         <div className="w-fit">
           <CollectionFreeCard url={gameplay.data.url} />
